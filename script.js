@@ -1,11 +1,11 @@
-window.onload = (event) => {
+document.addEventListener('DOMContentLoaded', function () {
 	const rocket=document.getElementById('rocket');
 	rocket.style.animation = "float 2s ease-in-out infinite";
-};
+});
 
 const starsContainer = document.querySelector('.stars');
 const stars = [];
-const starCount = 200;
+const starCount = 350;
 
 // Create stars with random positions and velocities
 for(let i=0;i<starCount;i++){
@@ -38,6 +38,15 @@ function animateStars() {
   requestAnimationFrame(animateStars);
 }
 animateStars();
+
+function spin() {
+  const rocket=document.getElementById('rocket');
+  rocket.style.animation="spin 1s ease-in-out";
+  
+  setTimeout(()=>{
+	 rocket.style.animation = "float 2s ease-in-out infinite"; 
+  }, 1000);
+}
 
 function warp(){
   const rocket=document.getElementById('rocket');
