@@ -1,0 +1,100 @@
+  body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, #0f172a 0%, #020617 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #f9fafb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    text-align: center;
+    z-index: 2;
+    position: relative;
+  }
+
+  h1 {
+    font-size: 6rem;
+    margin: 0;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(0,0,0,0.6);
+  }
+
+  p {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+    color: #d1d5db;
+  }
+
+  button {
+    padding: 0.8rem 1.6rem;
+    background: #22d3ee;
+    color: #0f172a;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.3s, background 0.3s;
+  }
+
+  button:hover {
+    background: #06b6d4;
+    transform: scale(1.1) rotate(-1deg);
+  }
+
+  #rocket {
+    width: 100px;
+    display: block;
+    margin: 0 auto 1rem;
+    animation: float 2s ease-in-out infinite;
+  }
+
+  /* Animations */
+  @keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0); }
+  }
+
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-5px)}
+    40%{transform:translateX(5px)}
+    60%{transform:translateX(-3px)}
+    80%{transform:translateX(3px)}
+  }
+
+  @keyframes launch {
+    from { transform:translateY(0) scale(1); }
+    to { transform:translateY(-200vh) scale(0.5); }
+  }
+
+  /* Stars */
+  .stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .stars span {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.6;
+    transition: transform 0.1s linear;
+  }
+
+  .warp .stars span {
+    transform: scaleY(20);
+    opacity: 1;
+    transition: transform 1s ease, opacity 1s ease;
+  }
