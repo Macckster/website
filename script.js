@@ -71,7 +71,7 @@ function warp(){
 	  "https://www.torproject.org/"
     ];
     const randomSite=destinations[Math.floor(Math.random()*destinations.length)];
-    window.location.href=randomSite;
+    window.location.replace(randomSite);
   },1800);
 }
 
