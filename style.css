@@ -510,33 +510,13 @@ h1.hl3-active {
 }
 
 /* ── Meteor shower ── */
-.meteor {
+#meteor-canvas {
   position: fixed;
-  width: 3px;
-  height: 3px;
-  background: #fff;
-  border-radius: 50%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 5;
-  opacity: 1;
-  box-shadow: 0 0 4px 1px #22d3ee88;
-  transform: translate(0, 0);
-  transition: none;
-}
-.meteor.fall {
-  transition: transform 1s cubic-bezier(0.4, 0, 1, 1), opacity 0.3s ease-in 0.7s;
-  transform: translate(300px, 220px);
-  opacity: 0;
-}
-.meteor::after {
-  content: '';
-  position: absolute;
-  right: 2px;
-  top: 1px;
-  width: 80px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #ffffff88);
-  transform-origin: right center;
 }
 
 /* ── God mode (iddqd) ── */

@@ -1,5 +1,7 @@
 // ─── Init ────────────────────────────────────────────────────────────────────
 
+let textTrickRunning = false;
+
 document.addEventListener('DOMContentLoaded', function () {
   const rocket = document.getElementById('rocket');
   rocket.style.animation = "float 2s ease-in-out infinite";
@@ -402,13 +404,11 @@ function toggleNebulaMode() {
 }
 
 // ─── HL3 easter egg ───────────────────────────────────────────────────────────
-
-let hl3Running = false;
 function hl3Confirmed() {
-  if(hl3Running)
+  if(textTrickRunning)
 	  return;
   
-  hl3Running = true;
+  textTrickRunning = true;
   
   const headline = document.getElementById('headline');
   const original = headline.textContent;
@@ -448,7 +448,7 @@ function hl3Confirmed() {
         clearInterval(typeTimer);
         headline.classList.remove('hl3-active');
         headline.textContent      = original;
-		hl3Running = false;
+		textTrickRunning = false;
         headline.style.opacity    = '';
         headline.style.minHeight  = '';
         headline.style.visibility = '';
@@ -460,6 +460,11 @@ function hl3Confirmed() {
 // ─── DOOM easter egg (iddqd) ──────────────────────────────────────────────────
 
 function godMode() {
+
+  if(textTrickRunning)
+	  return;
+	
+  textTrickRunning = true;
   const headline = document.getElementById('headline');
   const tagline  = document.getElementById('tagline');
   const origHead = headline.textContent;
@@ -485,6 +490,7 @@ function godMode() {
     document.body.classList.remove('god-mode');
 	headline.textContent    = origHead;
     tagline.textContent     = origTag;
+	textTrickRunning = false;
     // On next frame, drive colour and glow to nothing so transition fires
     requestAnimationFrame(() => requestAnimationFrame(() => {
       headline.style.textShadow = 'none';
@@ -502,6 +508,12 @@ function godMode() {
 
 // Bonus DOOM cheat: idkfa
 function infiniteAmmo() {
+  
+  if(textTrickRunning)
+	return;	  
+  
+  textTrickRunning = true;
+  
   const headline = document.getElementById('headline');
   const tagline  = document.getElementById('tagline');
   const origHead = headline.textContent;
@@ -518,6 +530,7 @@ function infiniteAmmo() {
     document.body.classList.remove('ammo-mode');
 	headline.textContent = origHead;
     tagline.textContent  = origTag;
+	textTrickRunning = false;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       headline.style.textShadow = 'none';
       headline.style.color      = '';
@@ -695,18 +708,157 @@ document.body.addEventListener('dblclick', (e) => {
   spawnMeteorShower();
 });
 
-function spawnMeteorShower() {
-  for (let i = 0; i < 12; i++) {
-    setTimeout(() => {
-      const meteor  = document.createElement('div');
-      meteor.className = 'meteor';
-      meteor.style.left = (Math.random() * window.innerWidth  * 0.7) + 'px';
-      meteor.style.top  = (Math.random() * window.innerHeight * 0.3) + 'px';
-      document.body.appendChild(meteor);
-      requestAnimationFrame(() => requestAnimationFrame(() => meteor.classList.add('fall')));
-      setTimeout(() => meteor.remove(), 1200);
-    }, i * 120);
+let meteorRAF = null;
+let meteorCanvas = null;
+let meteorCtx   = null;
+
+function getMeteorCanvas() {
+  if (!meteorCanvas) {
+    meteorCanvas = document.getElementById('meteor-canvas');
+    meteorCtx    = meteorCanvas.getContext('2d');
   }
+  meteorCanvas.width  = window.innerWidth;
+  meteorCanvas.height = window.innerHeight;
+  return { canvas: meteorCanvas, ctx: meteorCtx };
+}
+
+function spawnMeteorShower() {
+  const { canvas, ctx } = getMeteorCanvas();
+  const W = canvas.width, H = canvas.height;
+
+  // Spawn 10–14 comets, staggered
+  const COUNT = 10 + Math.floor(Math.random() * 5);
+  const comets = [];
+  const particles = [];
+
+  // Angle: always travelling roughly top-left → bottom-right with some variance
+  function makeComet(delay) {
+    const angle = (Math.PI / 4) + (Math.random() - 0.5) * 0.7; // ~45° ± 20°
+    const speed = 9 + Math.random() * 8;
+    const tailLen = 80 + Math.random() * 120;
+    const hue = Math.random() < 0.6 ? 195 : (Math.random() < 0.5 ? 270 : 45);
+    // Start from top or left edge
+    let sx, sy;
+    if (Math.random() < 0.6) {
+      sx = Math.random() * W; sy = -20;          // top edge
+    } else {
+      sx = -20; sy = Math.random() * H * 0.6;   // left edge
+    }
+    return {
+      x: sx, y: sy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      tailLen,
+      hue,
+      size: 1.5 + Math.random() * 2,
+      alpha: 1,
+      delay,
+      born: false,
+      dead: false,
+      trail: [],   // history of positions
+    };
+  }
+
+  for (let i = 0; i < COUNT; i++) {
+    comets.push(makeComet(i * 90));
+  }
+
+  let startTime = null;
+  if (meteorRAF) cancelAnimationFrame(meteorRAF);
+
+  function tick(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed = ts - startTime;
+
+    ctx.clearRect(0, 0, W, H);
+
+    let anyAlive = false;
+
+    comets.forEach(c => {
+      if (elapsed < c.delay) { anyAlive = true; return; }
+      if (!c.born) c.born = true;
+      if (c.dead) return;
+
+      // Move
+      c.x += c.vx;
+      c.y += c.vy;
+      c.trail.push({ x: c.x, y: c.y });
+      if (c.trail.length > 28) c.trail.shift();
+
+      // Fade out near edges
+      const margin = 60;
+      if (c.x > W + margin || c.y > H + margin || c.x < -margin) {
+        c.dead = true;
+        return;
+      }
+      anyAlive = true;
+
+      // Draw tail as gradient segments
+      for (let i = 1; i < c.trail.length; i++) {
+        const t0 = c.trail[i - 1], t1 = c.trail[i];
+        const prog = i / c.trail.length;
+        ctx.beginPath();
+        ctx.moveTo(t0.x, t0.y);
+        ctx.lineTo(t1.x, t1.y);
+        ctx.strokeStyle = `hsla(${c.hue},100%,85%,${prog * 0.9})`;
+        ctx.lineWidth   = c.size * prog;
+        ctx.lineCap     = 'round';
+        ctx.stroke();
+      }
+
+      // Glow head
+      const grd = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.size * 5);
+      grd.addColorStop(0, `hsla(${c.hue},100%,100%,0.9)`);
+      grd.addColorStop(0.4, `hsla(${c.hue},100%,80%,0.4)`);
+      grd.addColorStop(1, `hsla(${c.hue},100%,70%,0)`);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.size * 5, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Bright core
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+
+      // Occasionally shed a spark particle
+      if (Math.random() < 0.35) {
+        particles.push({
+          x: c.x, y: c.y,
+          vx: (Math.random() - 0.5) * 2.5,
+          vy: (Math.random() - 0.5) * 2.5,
+          life: 1,
+          hue: c.hue,
+          size: Math.random() * 1.5 + 0.5,
+        });
+      }
+    });
+
+    // Draw & age particles
+    particles.forEach((p, i) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.92;
+      p.vy *= 0.92;
+      p.life -= 0.04;
+      if (p.life <= 0) return;
+      anyAlive = true;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.hue},100%,85%,${p.life})`;
+      ctx.fill();
+    });
+
+    if (anyAlive) {
+      meteorRAF = requestAnimationFrame(tick);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+      meteorRAF = null;
+    }
+  }
+
+  meteorRAF = requestAnimationFrame(tick);
 }
 
 // ─── Extra rocket animation easter eggs ──────────────────────────────────────
