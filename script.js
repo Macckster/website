@@ -263,20 +263,101 @@ document.addEventListener('keydown', (e) => {
 });
 
 function activateHyperspace() {
-  starsContainer.classList.add('warp');
-  document.body.classList.add('hyperspace');
+  const overlay  = document.getElementById('hyperspace-overlay');
+  const canvas   = document.getElementById('hyperspace-canvas');
+  const text     = document.getElementById('hyperspace-text');
+  const ctx      = canvas.getContext('2d');
+  const DURATION = 4200; // ms
 
-  const msg      = document.createElement('div');
-  msg.id         = 'konami-msg';
-  msg.textContent = '🌌 HYPERSPACE UNLOCKED 🌌';
-  document.querySelector('.container').appendChild(msg);
-  requestAnimationFrame(() => requestAnimationFrame(() => msg.classList.add('visible')));
+  // Size canvas
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const cx = canvas.width  / 2;
+  const cy = canvas.height / 2;
+
+  // Generate stars
+  const NUM_STARS = 260;
+  const stars = Array.from({ length: NUM_STARS }, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist  = Math.random() * 0.25 + 0.02; // start near center
+    return {
+      angle,
+      dist,           // normalised 0–1 from center
+      speed: Math.random() * 0.012 + 0.006,
+      size:  Math.random() * 1.5 + 0.5,
+      hue:   Math.random() < 0.7 ? 195 : 270, // cyan or purple
+    };
+  });
+
+  let startTime = null;
+  let rafId;
+
+  function drawFrame(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed = ts - startTime;
+    const t = Math.min(elapsed / DURATION, 1); // 0→1
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Radial speed burst — accelerates hard in first 40% then sustains
+    const speedMult = t < 0.4
+      ? (t / 0.4) * 8          // ramp up fast
+      : 8 - (t - 0.4) / 0.6 * 3; // gentle ease off
+
+    stars.forEach(s => {
+      s.dist += s.speed * speedMult * 0.016;
+      if (s.dist > 1.5) {
+        // Reset to near-center
+        s.dist  = Math.random() * 0.05;
+        s.angle = Math.random() * Math.PI * 2;
+      }
+
+      const x = cx + Math.cos(s.angle) * s.dist * cx * 2;
+      const y = cy + Math.sin(s.angle) * s.dist * cy * 2;
+
+      // Streak length grows with speed
+      const streakLen = s.dist * speedMult * 28;
+      const x0 = cx + Math.cos(s.angle) * (s.dist * cx * 2 - streakLen);
+      const y0 = cy + Math.sin(s.angle) * (s.dist * cy * 2 - streakLen);
+
+      const alpha = Math.min(s.dist * 3, 1);
+      const grad  = ctx.createLinearGradient(x0, y0, x, y);
+      grad.addColorStop(0, `hsla(${s.hue},100%,85%,0)`);
+      grad.addColorStop(1, `hsla(${s.hue},100%,90%,${alpha})`);
+
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth   = s.size * (1 + s.dist * 2);
+      ctx.stroke();
+    });
+
+    if (elapsed < DURATION) {
+      rafId = requestAnimationFrame(drawFrame);
+    }
+  }
+
+  // Body rumble for first 600ms
+  document.body.style.animation = 'hsBodyShake 0.12s ease-in-out 5';
+
+  // Animate overlay in/out
+  overlay.style.animation = `hsOverlayIn ${DURATION}ms ease-in-out forwards`;
+  overlay.classList.add('active');
+
+  // Animate text
+  text.style.animation = `hsTextIn ${DURATION}ms ease-in-out forwards`;
+
+  // Kick off canvas
+  rafId = requestAnimationFrame(drawFrame);
 
   setTimeout(() => {
-    starsContainer.classList.remove('warp');
-    document.body.classList.remove('hyperspace');
-    msg.remove();
-  }, 3000);
+    cancelAnimationFrame(rafId);
+    overlay.classList.remove('active');
+    overlay.style.animation = '';
+    text.style.animation    = '';
+    document.body.style.animation = '';
+  }, DURATION + 100);
 }
 
 // ─── Keyword easter eggs ──────────────────────────────────────────────────────
@@ -304,6 +385,20 @@ let nebulaOn = false;
 function toggleNebulaMode() {
   nebulaOn = !nebulaOn;
   document.body.classList.toggle('nebula', nebulaOn);
+
+  const headline = document.getElementById('headline');
+  if (nebulaOn) {
+    // Wrap each character in a span with a staggered animation delay
+    headline.innerHTML = [...headline.textContent]
+      .map((char, i) => {
+        const c = char === ' ' ? '&nbsp;' : char;
+        return `<span class="wave-char" style="animation-delay:${i * 0.08}s">${c}</span>`;
+      })
+      .join('');
+  } else {
+    // Restore plain text
+    headline.textContent = headline.textContent;
+  }
 }
 
 // ─── HL3 easter egg ───────────────────────────────────────────────────────────
@@ -375,7 +470,6 @@ function godMode() {
   document.body.classList.add('god-mode');
 
   setTimeout(() => {
-    clearInterval(doomFlicker);
     // Explicitly clear any inline styles so CSS transition doesn't leave orange behind
     headline.style.color      = '';
     headline.style.textShadow = '';

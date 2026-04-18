@@ -18,7 +18,20 @@ body.nebula {
 body.nebula .stars span {
   box-shadow: 0 0 3px 1px #a855f788;
 }
-body.nebula h1 { color: #d8b4fe; text-shadow: 0 0 30px #a855f7; }
+body.nebula h1 { 
+	color: #d8b4fe; 
+	text-shadow: 0 0 30px #a855f7;   
+}
+
+body.nebula h1 .wave-char {
+  display: inline-block;
+  animation: wave 1.6s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
 
 /* ── Rage flash ── */
 #rage-overlay {
@@ -61,15 +74,94 @@ body.warp-active::after {
 }
 
 /* ── Hyperspace (konami) ── */
-body.hyperspace {
-  animation: hyperspaceFlash 3s ease-out;
+#hyperspace-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
 }
-@keyframes hyperspaceFlash {
-  0%,100% { filter: none; }
-  15%     { filter: hue-rotate(90deg) brightness(1.5); }
-  30%     { filter: hue-rotate(180deg) brightness(2); }
-  50%     { filter: hue-rotate(270deg) brightness(1.8); }
-  70%     { filter: hue-rotate(360deg) brightness(1.3); }
+#hyperspace-overlay.active {
+  pointer-events: all;
+}
+
+/* Streaking star canvas sits behind the text */
+#hyperspace-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The big central text */
+#hyperspace-text {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.4);
+  letter-spacing: 0.35em;
+}
+#hyperspace-text .hs-title {
+  display: block;
+  font-size: clamp(2rem, 8vw, 5.5rem);
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 20px #fff,
+    0 0 60px #22d3ee,
+    0 0 120px #22d3ee88;
+  letter-spacing: 0.3em;
+}
+#hyperspace-text .hs-sub {
+  display: block;
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  color: #22d3ee;
+  text-transform: uppercase;
+  letter-spacing: 0.5em;
+  margin-top: 0.75rem;
+  text-shadow: 0 0 20px #22d3ee;
+}
+
+/* Vignette ring that pulses in */
+#hyperspace-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center,
+    transparent 30%,
+    #000a 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes hsOverlayIn {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes hsTextIn {
+  0%   { opacity: 0; transform: scale(0.4); }
+  20%  { opacity: 0; transform: scale(0.4); }
+  40%  { opacity: 1; transform: scale(1.05); }
+  55%  { opacity: 1; transform: scale(1); }
+  80%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.5); }
+}
+@keyframes hsBodyShake {
+  0%,100% { transform: translate(0,0); }
+  20%     { transform: translate(-3px, 2px); }
+  40%     { transform: translate(3px, -2px); }
+  60%     { transform: translate(-2px, 3px); }
+  80%     { transform: translate(2px, -1px); }
 }
 
 /* ── Layout ── */
@@ -204,25 +296,6 @@ button.charging { animation: chargePulse 0.4s ease-in-out infinite alternate; }
   text-shadow: 0 0 20px #22d3ee, 0 0 40px #22d3ee88;
   letter-spacing: 0.05em;
 }
-
-/* ── Konami message ── */
-   Removed position:fixed top/left centering that was overlapping the headline. */
-#konami-msg {
-  display: block;
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 0 0 20px #a855f7, 0 0 60px #a855f788;
-  letter-spacing: 0.1em;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  pointer-events: none;
-  white-space: nowrap;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-#konami-msg.visible { opacity: 1; transform: scale(1); }
 
 /* ── Ejected pilot ── */
 #pilot {
