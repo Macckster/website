@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Lost in Space - 404</title>
+<title>Deep Space</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,12 +14,17 @@
 <div class="stars"></div>
 
 <div class="container" id="scene">
-  <!-- Rocket PNG -->
   <img id="rocket" src="rocket.png" alt="Rocket" onclick="spin()">
+  <h1 id="headline">∞</h1>
+  <p id="tagline">somewhere in the universe</p>
+  <button>Engage Warp Drive</button>
+</div>
 
-  <h1>404</h1>
-  <p>You’ve drifted into deep space. Let’s beam you somewhere else 🚀</p>
-  <button onclick="warp()">Engage Warp Drive</button>
+<!-- Custom context menu -->
+<div id="ctx-menu">
+  <div onclick="ctxEject()">⏏ Eject Pilot</div>
+  <div onclick="ctxRefuel()">⛽ Refuel</div>
+  <div onclick="document.getElementById('ctx-menu').classList.remove('open')">✕ Cancel</div>
 </div>
 
 <script src="script.js"></script>
