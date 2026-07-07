@@ -21,24 +21,37 @@ function applyTimeGreeting() {
   const hour     = new Date().getHours();
   const headline = document.getElementById('headline');
   const tagline  = document.getElementById('tagline');
-  if (hour >= 0 && hour < 5) {
+  if (hour < 5) {
     headline.textContent = 'Still Awake?';
     tagline.textContent  = "Let's beam you somewhere better 🚀";
-  } else if (hour >= 5 && hour < 9) {
+  } else if (hour < 9) {
     headline.textContent = 'Early Launch Window';
-    tagline.textContent  = "Let's beam you somewhere else 🚀";
-  } else if (hour >= 22) {
-    headline.textContent = 'Night Shift';
-    tagline.textContent  = "Let's beam you somewhere else 🚀";
-  } else {
+    tagline.textContent  = "Pre-launch systems nominal 🚀";
+  } else if (hour < 12) {
     headline.textContent = 'Deep Space';
+    tagline.textContent  = "Let's beam you somewhere else 🚀";
+  } else if (hour < 14) {
+    headline.textContent = 'Solar Apex';
+    tagline.textContent  = "Perfect orbit for a midday jump ☀️";
+  } else if (hour < 18) {
+    headline.textContent = 'Afternoon Drift';
+    tagline.textContent  = "Riding the solar winds 🌤️";
+  } else if (hour < 22) {
+    headline.textContent = 'Twilight Protocol';
+    tagline.textContent  = "The stars are coming out ✨";
+  } else {
+    headline.textContent = 'Night Shift';
     tagline.textContent  = "Let's beam you somewhere else 🚀";
   }
 }
 
-// ─── Stars ───────────────────────────────────────────────────────────────────
+// ─── Stars (canvas) ──────────────────────────────────────────────────────────
 
-const starsContainer = document.querySelector('.stars');
+const starCanvas = document.getElementById('star-canvas');
+const starCtx    = starCanvas.getContext('2d');
+starCanvas.width  = window.innerWidth;
+starCanvas.height = window.innerHeight;
+
 const stars     = [];
 const starCount = 350;
 
@@ -54,49 +67,95 @@ document.addEventListener('mousemove', (e) => {
 });
 
 for (let i = 0; i < starCount; i++) {
-  const star  = document.createElement('span');
-  const x     = Math.random() * window.innerWidth;
-  const y     = Math.random() * window.innerHeight;
-  const vx    = (Math.random() - 0.5) * 0.2;
-  const vy    = (Math.random() - 0.5) * 0.2;
-  const size  = 1 + Math.random() * 2;
-  const depth = Math.random();
-  star.style.left    = '0px';
-  star.style.top     = '0px';
-  star.style.width   = star.style.height = size + 'px';
-  star.style.opacity = 0.3 + depth * 0.7;
-  starsContainer.appendChild(star);
-  stars.push({ el: star, x, y, vx, vy, depth });
+  stars.push({
+    x:     Math.random() * window.innerWidth,
+    y:     Math.random() * window.innerHeight,
+    vx:    (Math.random() - 0.5) * 0.2,
+    vy:    (Math.random() - 0.5) * 0.2,
+    size:  1 + Math.random() * 2,
+    depth: Math.random(),
+  });
 }
 
-let warping = false;
+let warping      = false;
+let warpStartTime = 0;
+let timeStopped   = false;
 
 function animateStars() {
   mouseX += (targetMouseX - mouseX) * 0.05;
   mouseY += (targetMouseY - mouseY) * 0.05;
 
-  const centerX = window.innerWidth  / 2;
-  const centerY = window.innerHeight / 2;
+  const W       = starCanvas.width;
+  const H       = starCanvas.height;
+  const centerX = W / 2;
+  const centerY = H / 2;
   const offsetX = (mouseX - centerX) / centerX;
   const offsetY = (mouseY - centerY) / centerY;
   const margin  = 40;
 
+  const isGodMode  = document.body.classList.contains('god-mode');
+  const isAmmoMode = document.body.classList.contains('ammo-mode');
+  const isNebula   = document.body.classList.contains('nebula');
+  const dotColor   = isGodMode ? '#39ff14' : isAmmoMode ? '#ffd700' : '#ffffff';
+  const wf         = warping && warpStartTime
+    ? Math.min((performance.now() - warpStartTime) / 1400, 1)
+    : 0;
+
+  starCtx.clearRect(0, 0, W, H);
+
+  if (isNebula) {
+    starCtx.shadowColor = '#a855f7';
+    starCtx.shadowBlur  = 4;
+  } else if (isGodMode) {
+    starCtx.shadowColor = '#39ff14';
+    starCtx.shadowBlur  = 4;
+  } else {
+    starCtx.shadowBlur = 0;
+  }
+
   for (const s of stars) {
-    if (!warping) {
+    if (!warping && !timeStopped) {
       s.x += s.vx;
       s.y += s.vy;
-      const edgeX = Math.min(s.x / margin, (window.innerWidth  - s.x) / margin, 1);
-      const edgeY = Math.min(s.y / margin, (window.innerHeight - s.y) / margin, 1);
-      s.el.style.opacity = (0.3 + s.depth * 0.7) * Math.max(0, Math.min(edgeX, edgeY));
-      if (s.x < -margin)                     s.x = window.innerWidth  + margin;
-      if (s.x > window.innerWidth  + margin)  s.x = -margin;
-      if (s.y < -margin)                     s.y = window.innerHeight + margin;
-      if (s.y > window.innerHeight + margin)  s.y = -margin;
+      if (s.x < -margin)    s.x = W + margin;
+      if (s.x > W + margin) s.x = -margin;
+      if (s.y < -margin)    s.y = H + margin;
+      if (s.y > H + margin) s.y = -margin;
     }
-    const px = offsetX * s.depth * 30;
-    const py = offsetY * s.depth * 30;
-    s.el.style.transform = `translate(${s.x + px}px, ${s.y + py}px)`;
+
+    const px      = offsetX * s.depth * 30;
+    const py      = offsetY * s.depth * 30;
+    const sx      = s.x + px;
+    const sy      = s.y + py;
+    const edgeX   = Math.min(s.x / margin, (W - s.x) / margin, 1);
+    const edgeY   = Math.min(s.y / margin, (H - s.y) / margin, 1);
+    const opacity = (0.3 + s.depth * 0.7) * Math.max(0, Math.min(edgeX, edgeY));
+
+    if (wf > 0) {
+      const dx        = sx - centerX;
+      const dy        = sy - centerY;
+      const dist      = Math.sqrt(dx * dx + dy * dy) || 1;
+      const streakLen = wf * 80 * s.depth;
+      const nx        = dx / dist;
+      const ny        = dy / dist;
+      starCtx.beginPath();
+      starCtx.moveTo(sx - nx * streakLen, sy - ny * streakLen);
+      starCtx.lineTo(sx + nx * 2, sy + ny * 2);
+      starCtx.strokeStyle = `rgba(34,211,238,${opacity})`;
+      starCtx.lineWidth   = s.size * (1 + wf * 2);
+      starCtx.lineCap     = 'round';
+      starCtx.stroke();
+    } else {
+      starCtx.globalAlpha = opacity;
+      starCtx.fillStyle   = dotColor;
+      starCtx.beginPath();
+      starCtx.arc(sx, sy, s.size / 2, 0, Math.PI * 2);
+      starCtx.fill();
+    }
   }
+
+  starCtx.globalAlpha = 1;
+  starCtx.shadowBlur  = 0;
   requestAnimationFrame(animateStars);
 }
 animateStars();
@@ -375,6 +434,7 @@ document.addEventListener('keydown', (e) => {
     else if (typed.includes('hl3')) { typed = ''; hl3Confirmed();    }
     else if (typed.includes('iddqd')){ typed = ''; godMode();        }
     else if (typed.includes('idkfa')){ typed = ''; infiniteAmmo();   }
+    else if (typed.includes('zawarudo') || typed.includes('theworld')) { typed = ''; zaWarudo(); }
     else {
       for (const [word, fn] of Object.entries(extraKeywords)) {
         if (typed.endsWith(word)) { typed = ''; fn(); break; }
@@ -544,6 +604,59 @@ function infiniteAmmo() {
   }, 3200);
 }
 
+// ─── JoJo easter egg (zawarudo / theworld) ────────────────────────────────────
+function zaWarudo() {
+  if (textTrickRunning || warping) return;
+  textTrickRunning = true;
+  timeStopped      = true;
+
+  const headline = document.getElementById('headline');
+  const tagline  = document.getElementById('tagline');
+  const origHead = headline.textContent;
+  const origTag  = tagline.textContent;
+
+  try {
+    const sfx = new Audio('zawarudo.mp3');
+    sfx.volume = 0.3;
+    sfx.play().catch(() => {});
+  } catch (_) { /* no audio, no problem */ }
+
+  // Freeze the drifting rocket mid-float and stop the idle drift
+  const r = getRocket();
+  r.style.animationPlayState = 'paused';
+  clearTimeout(idleTimer);
+
+  // Sepia "frozen time" tint + a quick invert flash across the whole page
+  const tint = document.createElement('div');
+  tint.id = 'timestop-tint';
+  document.body.appendChild(tint);
+  requestAnimationFrame(() => requestAnimationFrame(() => tint.classList.add('active')));
+
+  headline.textContent = 'Za Warudo';
+  tagline.textContent  = 'Toki Yo Tomare';
+  document.body.classList.add('time-stop');
+
+  // Time resumes
+  setTimeout(() => {
+    tagline.textContent = 'Soshite Toki Wa Ugokidasu';
+  }, 2900);
+
+  setTimeout(() => {
+    tint.classList.add('resume');
+    document.body.classList.remove('time-stop');
+    timeStopped = false;
+    r.style.animationPlayState = '';
+    headline.textContent = origHead;
+    tagline.textContent  = origTag;
+  }, 3500);
+
+  setTimeout(() => {
+    tint.remove();
+    textTrickRunning = false;
+    resetIdle();
+  }, 4100);
+}
+
 // ─── Right-click context menu ─────────────────────────────────────────────────
 
 const ctxMenu = document.getElementById('ctx-menu');
@@ -579,7 +692,7 @@ function ctxRefuel() {
   ctxMenu.classList.remove('open');
   const bar = document.createElement('div');
   bar.id        = 'fuel-bar';
-  bar.innerHTML = '<div id="fuel-fill"></div><span>FUELING...</span>';
+  bar.innerHTML = '<span>FUELING...</span><div id="fuel-fill"></div>';
   document.body.appendChild(bar);
   requestAnimationFrame(() => requestAnimationFrame(() => {
     bar.classList.add('visible');
@@ -681,7 +794,7 @@ function warpFire() {
 
   setTimeout(() => {
     setRocketAnim('launch 1s ease-in forwards');
-    starsContainer.classList.add('warp');
+    warpStartTime = performance.now();
     document.body.classList.add('warp-active');
     showDestination(dest.label);
     setTimeout(() => { window.location.replace(dest.url); }, 2200);
@@ -951,8 +1064,12 @@ function showBriefTag(text) {
 // ─── Resize ───────────────────────────────────────────────────────────────────
 
 window.addEventListener('resize', () => {
+  const scaleX = window.innerWidth  / (starCanvas.width  || window.innerWidth);
+  const scaleY = window.innerHeight / (starCanvas.height || window.innerHeight);
+  starCanvas.width  = window.innerWidth;
+  starCanvas.height = window.innerHeight;
   for (const s of stars) {
-    s.x = Math.random() * window.innerWidth;
-    s.y = Math.random() * window.innerHeight;
+    s.x *= scaleX;
+    s.y *= scaleY;
   }
 });
