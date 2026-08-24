@@ -43,7 +43,7 @@ const page = (host) => String.raw`
    The browser version has things hidden in it. Start with the
    Konami code, then try typing at it.
 
-   $ curl ${host}/ip
+   $ curl -L ${host}/ip
 
 `;
 
