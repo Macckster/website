@@ -1,0 +1,5 @@
+# --- vanity links ----------------------------------------------------
+/gh          https://github.com/Macckster                301
+
+# --- catch-all (keep last) -------------------------------------------
+# /*         /index.html                                   200
