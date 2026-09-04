@@ -35,6 +35,7 @@ const page = (host) => String.raw`
 
    --- endpoints ------------------------------------------------------
    /ip          your public IP address, plain text
+   /ip?extra=1  the above, plus country, network, colo, ...
    /?tty        this page, from a browser
 
    --- links ----------------------------------------------------------
