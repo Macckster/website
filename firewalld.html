@@ -11,6 +11,7 @@
 
 <header>
   <a href="/">← deep space</a>
+  <nav class="sheets"></nav>
   <h1>firewalld</h1>
   <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
   <input id="filter" type="search" placeholder="filter… (port, zone, rich, forward)" autocomplete="off">
@@ -91,7 +92,7 @@ sudo firewall-cmd --reload</pre></div>
 
   <div class="card">
     <h3>Bind a source network to a zone</h3>
-    <p class="note">Traffic from this subnet uses the zone's rules regardless of interface.</p>
+    <p class="note">Traffic from this subnet uses the zone's rules regardless of interface. Check what a range covers with <a href="/tools#cidr">/cidr</a>.</p>
     <div class="code"><pre>sudo firewall-cmd --permanent --zone=trusted --add-source=192.168.1.0/24
 sudo firewall-cmd --reload</pre></div>
   </div>
@@ -158,6 +159,7 @@ sudo firewall-cmd --reload</pre></div>
 
   <div class="card">
     <h3>Allow SSH from a subnet</h3>
+    <p class="note">Not sure what a /24 covers? <a href="/tools#cidr">/cidr</a></p>
     <div class="code"><pre>sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.1.0/24" service name="ssh" accept'
 sudo firewall-cmd --reload</pre></div>
   </div>

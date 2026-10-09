@@ -35,15 +35,18 @@ h1 {
 }
 header p { margin: 0; color: var(--muted); }
 
-nav.sheets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+/* min-height = one row of pills, so the empty placeholder takes the same space */
+nav.sheets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; min-height: calc(1.6rem + 2px); }
 nav.sheets a {
   padding: 0.2rem 0.6rem;
+  line-height: 1.2rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   font-family: var(--mono);
   font-size: 0.8rem;
 }
-nav.sheets a.current { color: var(--panel); background: var(--accent); border-color: var(--accent); }
+nav.sheets a.extra { border-style: dashed; margin-left: 0.6rem; }
+nav.sheets a.current { color: var(--panel); background: var(--accent); border-color: var(--accent); border-style: solid; }
 
 #filter {
   width: 100%;
@@ -69,6 +72,8 @@ h2 {
 .card { margin-bottom: 1rem; }
 .card h3 { margin: 0 0 0.35rem; font-size: 0.95rem; font-weight: 600; }
 .card .note { margin: 0 0 0.4rem; font-size: 0.85rem; color: var(--muted); }
+.card .note a { color: var(--accent); text-decoration: none; font-family: var(--mono); }
+.card .note a:hover { text-decoration: underline; }
 
 .code {
   position: relative;
@@ -91,16 +96,19 @@ pre {
   top: 0.45rem;
   right: 0.45rem;
   padding: 0.3rem 0.6rem;
-  background: #22d3ee14;
+  /* Tint layered over a solid panel colour so scrolled text can't show through */
+  background: linear-gradient(#22d3ee14, #22d3ee14), var(--panel);
   color: var(--accent);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
+  box-shadow: -0.6rem 0 0.6rem var(--panel);
+  z-index: 1;
   font: inherit;
   font-size: 0.75rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.copy:hover { background: #22d3ee30; color: #fff; }
+.copy:hover { background: linear-gradient(#22d3ee30, #22d3ee30), var(--panel); color: #fff; }
 .copy.done { background: var(--accent); color: var(--panel); }
 
 code.inline {

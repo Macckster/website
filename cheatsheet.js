@@ -1,20 +1,27 @@
 // Every cheat sheet page. Add new ones here (and to CHEATSHEETS in
 // functions/_middleware.js for the curl version).
 const SHEETS = ['firewalld', 'systemd', 'git', 'ssh'];
+// Other pages shown in the nav, after the sheets
+const EXTRA = ['tools'];
 
-// Nav between sheets, inserted after the "← deep space" link
+// Nav between sheets. Pages include an empty <nav class="sheets"> so its
+// space is reserved before this runs (no layout jump); the links come from here.
 (function () {
-  const nav = document.createElement('nav');
-  nav.className = 'sheets';
+  let nav = document.querySelector('nav.sheets');
+  if (!nav) {
+    nav = document.createElement('nav');
+    nav.className = 'sheets';
+    document.querySelector('header > a').after(nav);
+  }
   const here = location.pathname.replace(/\/$/, '');
-  SHEETS.forEach(function (name) {
+  SHEETS.concat(EXTRA).forEach(function (name) {
     const a = document.createElement('a');
     a.href = '/' + name;
     a.textContent = name;
-    if (here === '/' + name) a.className = 'current';
+    if (here === '/' + name) a.classList.add('current');
+    if (EXTRA.includes(name)) a.classList.add('extra');
     nav.appendChild(a);
   });
-  document.querySelector('header > a').after(nav);
 })();
 
 // Copy buttons on every code block
@@ -52,34 +59,36 @@ function copyText(text) {
   return Promise.resolve();
 }
 
-// Filter cards by text
+// Filter cards by text (cheat sheet pages only)
 const filter = document.getElementById('filter');
 const empty  = document.getElementById('empty');
 
-filter.addEventListener('input', function () {
-  const q = filter.value.trim().toLowerCase();
-  let any = false;
-  document.querySelectorAll('section').forEach(function (section) {
-    let visible = 0;
-    section.querySelectorAll('.card').forEach(function (card) {
-      const match = !q || card.textContent.toLowerCase().includes(q);
-      card.hidden = !match;
-      if (match) visible++;
+if (filter) {
+  filter.addEventListener('input', function () {
+    const q = filter.value.trim().toLowerCase();
+    let any = false;
+    document.querySelectorAll('section').forEach(function (section) {
+      let visible = 0;
+      section.querySelectorAll('.card').forEach(function (card) {
+        const match = !q || card.textContent.toLowerCase().includes(q);
+        card.hidden = !match;
+        if (match) visible++;
+      });
+      section.hidden = visible === 0;
+      if (visible) any = true;
     });
-    section.hidden = visible === 0;
-    if (visible) any = true;
+    empty.hidden = any;
   });
-  empty.hidden = any;
-});
 
-// "/" focuses the filter, Esc clears it
-document.addEventListener('keydown', function (e) {
-  if (e.key === '/' && document.activeElement !== filter) {
-    e.preventDefault();
-    filter.focus();
-  } else if (e.key === 'Escape' && document.activeElement === filter) {
-    filter.value = '';
-    filter.dispatchEvent(new Event('input'));
-    filter.blur();
-  }
-});
+  // "/" focuses the filter, Esc clears it
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== filter) {
+      e.preventDefault();
+      filter.focus();
+    } else if (e.key === 'Escape' && document.activeElement === filter) {
+      filter.value = '';
+      filter.dispatchEvent(new Event('input'));
+      filter.blur();
+    }
+  });
+}

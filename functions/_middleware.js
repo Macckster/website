@@ -39,6 +39,8 @@ const page = (host) => String.raw`
    /cidr        subnet calculator       /cidr/10.0.0.0/22
    /dns         DNS lookup              /dns/example.com/mx
    /cron        explain a cron line     /cron/*/15_9-17_*_*_1-5
+   /tz          convert timezones       /tz/15:00/Europe/Berlin
+   /tools       all of the above with input fields, for browsers
    /?tty        this page, from a browser
 
    --- cheat sheets ---------------------------------------------------

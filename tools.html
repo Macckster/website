@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tools</title>
+<link rel="stylesheet" href="/cheatsheet.css">
+<style>
+  .jump { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .jump a {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  .tool { scroll-margin-top: 1rem; }
+  .tool h2 span { color: var(--muted); letter-spacing: 0.1em; text-transform: none; font-size: 0.8rem; margin-left: 0.4rem; }
+
+  form.fields { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: flex-end; margin-bottom: 0.6rem; }
+  form.fields label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.75rem; color: var(--muted); }
+  form.fields label.grow { flex: 1 1 14rem; }
+  form.fields label.check { flex-direction: row; align-items: center; gap: 0.4rem; padding-bottom: 0.6rem; font-size: 0.85rem; }
+
+  input, select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 0.45rem;
+    color: var(--text);
+    font: inherit;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    padding: 0.55rem 0.7rem;
+    min-width: 0;
+  }
+  input[type="checkbox"] { accent-color: var(--accent); width: 1rem; height: 1rem; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #22d3ee22; }
+  input:disabled { opacity: 0.45; }
+  input::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+
+  select.zone { width: 100%; }
+  .zone-list { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.75rem; color: var(--muted); flex: 1 1 16rem; }
+  .zone-row { display: flex; gap: 0.4rem; }
+  .zone-row select { flex: 1; }
+  .zone-btn {
+    padding: 0 0.7rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 0.45rem;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .zone-btn:hover { color: var(--text); border-color: var(--accent); }
+  .zone-btn.add { align-self: flex-start; padding: 0.35rem 0.7rem; font-size: 0.78rem; border-style: dashed; }
+
+  .cron-fields { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; flex: 1 1 100%; }
+  .cron-fields input { width: 100%; text-align: center; }
+
+  button.go {
+    padding: 0.6rem 1.1rem;
+    background: var(--accent);
+    color: var(--panel);
+    border: none;
+    border-radius: 0.45rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.go:hover { background: #06b6d4; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+  .presets button {
+    padding: 0.25rem 0.65rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .presets button:hover { color: var(--text); border-color: var(--accent); }
+
+  .hint { font-size: 0.78rem; color: var(--muted); margin: 0 0 0.6rem; }
+  .hint code { font-family: var(--mono); color: var(--text); }
+
+  /* Reserve room for each tool's first result so the page doesn't jump as
+     the results arrive. --lines is roughly the default output's height. */
+  .out pre { min-height: calc(var(--lines, 3) * 1.55em + 1.6rem); transition: opacity 0.15s; }
+  #cidr { --lines: 10; }
+  #dns  { --lines: 13; }
+  #cron { --lines: 9; }
+  #tz   { --lines: 5; }
+  .tool.loading .out pre { opacity: 0.5; }
+  .tool.error .out { border-color: #f8717166; }
+  .tool.error .out pre { color: #fca5a5; }
+
+  .cmd { margin-top: 0.4rem; background: transparent; border-style: dashed; }
+  .cmd pre { font-size: 0.8rem; color: var(--muted); padding-top: 0.55rem; padding-bottom: 0.55rem; min-height: calc(1.55em + 1.1rem); }
+  .cmd pre::before { content: '$ '; color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <a href="/">← deep space</a>
+  <nav class="sheets"></nav>
+  <h1>tools</h1>
+  <p>Browser front-end for the curl endpoints. The matching <code class="inline">curl</code> command is under each result.</p>
+  <div class="jump">
+    <a href="#cidr">cidr</a>
+    <a href="#dns">dns</a>
+    <a href="#cron">cron</a>
+    <a href="#tz">tz</a>
+  </div>
+</header>
+
+<!-- ─── cidr ─────────────────────────────────────────────────────────── -->
+<section class="tool" id="cidr">
+  <h2>cidr <span>subnet calculator</span></h2>
+  <form class="fields">
+    <label class="grow">IP address
+      <input name="ip" value="192.168.1.0" placeholder="10.0.0.0  or  10.0.0.0/22" spellcheck="false" autocomplete="off">
+    </label>
+    <label>Prefix
+      <select name="prefix"></select>
+    </label>
+  </form>
+  <div class="code out"><pre></pre></div>
+  <div class="code cmd"><pre></pre></div>
+</section>
+
+<!-- ─── dns ──────────────────────────────────────────────────────────── -->
+<section class="tool" id="dns">
+  <h2>dns <span>lookup over 1.1.1.1</span></h2>
+  <form class="fields">
+    <label class="grow">Hostname or IPv4
+      <input name="name" value="example.com" placeholder="example.com" spellcheck="false" autocomplete="off">
+    </label>
+    <label>Type
+      <select name="type">
+        <option value="">common</option>
+        <option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option>
+        <option>TXT</option><option>NS</option><option>SOA</option><option>PTR</option>
+        <option>CAA</option><option>SRV</option><option>HTTPS</option>
+      </select>
+    </label>
+    <button class="go" type="submit">Look up</button>
+  </form>
+  <div class="code out"><pre></pre></div>
+  <div class="code cmd"><pre></pre></div>
+</section>
+
+<!-- ─── cron ─────────────────────────────────────────────────────────── -->
+<section class="tool" id="cron">
+  <h2>cron <span>explain a schedule</span></h2>
+  <div class="presets">
+    <button type="button" data-expr="*/15 * * * *">every 15 min</button>
+    <button type="button" data-expr="0 * * * *">hourly</button>
+    <button type="button" data-expr="0 3 * * *">daily 03:00</button>
+    <button type="button" data-expr="*/15 9-17 * * 1-5">work hours</button>
+    <button type="button" data-expr="0 9 * * mon">Mondays 09:00</button>
+    <button type="button" data-expr="0 0 1 * *">monthly</button>
+  </div>
+  <form class="fields">
+    <div class="cron-fields">
+      <label>minute <input name="f0" value="*/15" spellcheck="false" autocomplete="off"></label>
+      <label>hour <input name="f1" value="9-17" spellcheck="false" autocomplete="off"></label>
+      <label>day <input name="f2" value="*" spellcheck="false" autocomplete="off"></label>
+      <label>month <input name="f3" value="*" spellcheck="false" autocomplete="off"></label>
+      <label>weekday <input name="f4" value="1-5" spellcheck="false" autocomplete="off"></label>
+    </div>
+    <label class="grow">Timezone for next runs
+      <select name="tz" class="zone"></select>
+    </label>
+  </form>
+  <p class="hint">
+    <code>*</code> any · <code>,</code> list · <code>-</code> range · <code>/</code> step ·
+    names like <code>mon</code> / <code>jan</code> work · paste a whole line into any box
+  </p>
+  <div class="code out"><pre></pre></div>
+  <div class="code cmd"><pre></pre></div>
+</section>
+
+<!-- ─── tz ───────────────────────────────────────────────────────────── -->
+<section class="tool" id="tz">
+  <h2>tz <span>convert between timezones</span></h2>
+  <form class="fields">
+    <label class="check"><input type="checkbox" name="now" checked> now</label>
+    <label>Time
+      <input type="datetime-local" name="when" disabled>
+    </label>
+    <label class="grow">From
+      <select name="from" class="zone"></select>
+    </label>
+    <div class="zone-list">
+      To
+      <div class="zone-rows"></div>
+      <button type="button" class="zone-btn add">+ add zone</button>
+    </div>
+  </form>
+  <div class="code out"><pre></pre></div>
+  <div class="code cmd"><pre></pre></div>
+</section>
+
+</main>
+
+<script src="/cheatsheet.js"></script>
+<script>
+  // Chrome (like V8 on the server) still reports some zones by their old
+  // names. Show the current ones; the server accepts both.
+  const MODERN = {
+    'Asia/Calcutta': 'Asia/Kolkata', 'Asia/Saigon': 'Asia/Ho_Chi_Minh', 'Asia/Katmandu': 'Asia/Kathmandu',
+    'Asia/Rangoon': 'Asia/Yangon', 'Europe/Kiev': 'Europe/Kyiv', 'Atlantic/Faeroe': 'Atlantic/Faroe',
+    'America/Godthab': 'America/Nuuk', 'Pacific/Truk': 'Pacific/Chuuk', 'Pacific/Ponape': 'Pacific/Pohnpei',
+    'Pacific/Enderbury': 'Pacific/Kanton', 'Africa/Asmera': 'Africa/Asmara',
+  };
+  const modern = function (zone) { return MODERN[zone] || zone; };
+
+  const localZone = modern(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+  // Current UTC offset of a zone, e.g. "UTC+05:30" (empty if unsupported)
+  function zoneOffset(zone) {
+    try {
+      const name = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' })
+        .formatToParts(new Date()).find(function (p) { return p.type === 'timeZoneName'; }).value;
+      return name === 'GMT' ? 'UTC+00:00' : name.replace('GMT', 'UTC');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  // <option>s for every zone, grouped by region ("America", "Europe", ...),
+  // built once and copied into each zone dropdown.
+  const ZONE_OPTIONS = (function () {
+    const zones = (Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : []).map(modern);
+    if (!zones.includes(localZone)) zones.push(localZone);
+
+    const groups = {};
+    zones.filter(function (z) { return z !== 'UTC'; }).forEach(function (zone) {
+      const parts = zone.split('/');
+      const region = parts.length > 1 ? parts[0] : 'Other';
+      const city = (parts.length > 1 ? parts.slice(1) : parts).join(' / ').replace(/_/g, ' ');
+      (groups[region] = groups[region] || []).push([zone, city]);
+    });
+
+    const option = function (value, label) {
+      const offset = zoneOffset(value);
+      return '<option value="' + value + '">' + label + (offset ? '  (' + offset + ')' : '') + '</option>';
+    };
+
+    return '<option value="UTC">UTC</option>' + Object.keys(groups).sort().map(function (region) {
+      return '<optgroup label="' + region + '">'
+        + groups[region].sort(function (a, b) { return a[1].localeCompare(b[1]); })
+          .map(function (z) { return option(z[0], z[1]); }).join('')
+        + '</optgroup>';
+    }).join('');
+  })();
+
+  function zoneSelect(select, value) {
+    select.innerHTML = ZONE_OPTIONS;
+    select.value = value;
+    return select;
+  }
+
+  // Wires one tool section: build(form) returns the endpoint path (or a
+  // string starting with "!" to show as a message instead of fetching).
+  function tool(id, build, opts) {
+    opts = opts || {};
+    const section = document.getElementById(id);
+    const form = section.querySelector('form');
+    const out = section.querySelector('.out pre');
+    const cmd = section.querySelector('.cmd pre');
+    let timer;
+    let seq = 0;
+
+    async function run() {
+      const path = build(form);
+      if (path.startsWith('!')) {
+        out.textContent = path.slice(1);
+        cmd.textContent = '';
+        section.classList.remove('error', 'loading');
+        return;
+      }
+      cmd.textContent = "curl -L '" + location.origin + path + "'";
+
+      const mine = ++seq;
+      section.classList.add('loading');
+      try {
+        const res = await fetch(path);
+        const text = await res.text();
+        if (mine !== seq) return;
+        out.textContent = text.replace(/\n+$/, '');
+        section.classList.toggle('error', !res.ok);
+      } catch (err) {
+        if (mine !== seq) return;
+        out.textContent = 'request failed: ' + err.message;
+        section.classList.add('error');
+      } finally {
+        if (mine === seq) section.classList.remove('loading');
+      }
+    }
+
+    const later = function () {
+      clearTimeout(timer);
+      timer = setTimeout(run, 250);
+    };
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearTimeout(timer);
+      run();
+    });
+    if (opts.live !== false) form.addEventListener('input', later);
+    (opts.changeOnly || []).forEach(function (name) {
+      form.elements[name].addEventListener('change', run);
+    });
+
+    run();
+    return run;
+  }
+
+  const seg = function (s) { return encodeURI(s.trim()); };
+
+  // ─── cidr ───────────────────────────────────────────────────────────
+  (function () {
+    const form = document.querySelector('#cidr form');
+    const select = form.elements.prefix;
+    for (let p = 32; p >= 0; p--) {
+      const mask = p === 0 ? 0 : (0xFFFFFFFF << (32 - p)) >>> 0;
+      const dotted = [24, 16, 8, 0].map(function (s) { return (mask >>> s) & 255; }).join('.');
+      const hosts = p >= 31 ? 2 ** (32 - p) : 2 ** (32 - p) - 2;
+      select.add(new Option('/' + p + '  ' + dotted + '  (' + hosts.toLocaleString('en-US') + ')', p));
+    }
+    select.value = '24';
+
+    tool('cidr', function (f) {
+      // Accept "10.0.0.0/22" pasted into the address box
+      const m = f.elements.ip.value.trim().match(/^([\d.]+)\/(\d{1,2})$/);
+      if (m && Number(m[2]) <= 32) {
+        f.elements.ip.value = m[1];
+        select.value = m[2];
+      }
+      const ip = f.elements.ip.value.trim();
+      return ip ? '/cidr/' + seg(ip) + '/' + select.value : '!enter an IPv4 address';
+    });
+  })();
+
+  // ─── dns ────────────────────────────────────────────────────────────
+  tool('dns', function (f) {
+    // Forgive pasted URLs: "https://example.com/path" -> "example.com"
+    const name = f.elements.name.value.trim()
+      .replace(/^[a-z]+:\/\//i, '').replace(/[/?#].*$/, '').replace(/:\d+$/, '');
+    if (!name) return '!enter a hostname';
+    const type = f.elements.type.value;
+    return '/dns/' + seg(name) + (type ? '/' + type.toLowerCase() : '');
+  }, { live: false, changeOnly: ['type'] });
+
+  // ─── cron ───────────────────────────────────────────────────────────
+  (function () {
+    const form = document.querySelector('#cron form');
+    const fields = [0, 1, 2, 3, 4].map(function (i) { return form.elements['f' + i]; });
+    const MACROS = {
+      '@yearly': '0 0 1 1 *', '@annually': '0 0 1 1 *', '@monthly': '0 0 1 * *',
+      '@weekly': '0 0 * * 0', '@daily': '0 0 * * *', '@midnight': '0 0 * * *', '@hourly': '0 * * * *',
+    };
+    zoneSelect(form.elements.tz, localZone);
+
+    const fill = function (expr) {
+      expr.trim().split(/\s+/).forEach(function (part, i) { fields[i].value = part; });
+    };
+
+    // A whole line (or @macro) typed/pasted into any box spreads across all five
+    fields.forEach(function (input) {
+      input.addEventListener('input', function () {
+        const v = input.value.trim();
+        if (MACROS[v.toLowerCase()]) fill(MACROS[v.toLowerCase()]);
+        else if (v.split(/\s+/).length === 5) fill(v);
+      });
+    });
+
+    const run = tool('cron', function (f) {
+      const parts = fields.map(function (i) { return i.value.trim(); });
+      if (parts.some(function (p) { return !p; })) return '!fill in all five fields (use * for "any")';
+      if (parts.some(function (p) { return /\s/.test(p); })) return '!one value per box';
+      return '/cron/' + seg(parts.join('_')) + '?tz=' + encodeURIComponent(f.elements.tz.value);
+    });
+
+    document.querySelectorAll('#cron .presets button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fill(btn.dataset.expr);
+        run();
+      });
+    });
+  })();
+
+  // ─── tz ─────────────────────────────────────────────────────────────
+  (function () {
+    const form = document.querySelector('#tz form');
+    const when = form.elements.when;
+    const rows = form.querySelector('.zone-rows');
+    let run;
+    zoneSelect(form.elements.from, localZone);
+
+    // One dropdown per target zone, each with a remove button
+    function addRow(zone) {
+      const row = document.createElement('div');
+      row.className = 'zone-row';
+      const select = zoneSelect(document.createElement('select'), zone);
+      select.className = 'zone to';
+      select.setAttribute('aria-label', 'Target timezone');
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'zone-btn';
+      remove.textContent = '✕';
+      remove.setAttribute('aria-label', 'Remove timezone');
+      remove.addEventListener('click', function () {
+        row.remove();
+        run();
+      });
+      row.append(select, remove);
+      rows.appendChild(row);
+    }
+    ['America/New_York', 'Asia/Tokyo'].forEach(addRow);
+
+    form.querySelector('.zone-btn.add').addEventListener('click', function () {
+      addRow('UTC');
+      rows.lastChild.querySelector('select').focus();
+      run();
+    });
+
+    // Local "YYYY-MM-DDTHH:MM" for the datetime input
+    const nowLocal = function () {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    };
+
+    form.elements.now.addEventListener('change', function () {
+      when.disabled = form.elements.now.checked;
+      if (!when.disabled && !when.value) when.value = nowLocal();
+    });
+
+    run = tool('tz', function (f) {
+      const from = f.elements.from.value;
+      const to = Array.from(rows.querySelectorAll('select')).map(function (s) { return s.value; });
+      let time = 'now';
+      if (!f.elements.now.checked) {
+        if (!when.value) return '!pick a time, or tick "now"';
+        time = when.value.replace('T', '_');
+      }
+      return '/tz/' + time + '/' + [from].concat(to.length ? [to.join(',')] : []).map(seg).join('/')
+        + '?here=' + encodeURIComponent(localZone);
+    });
+  })();
+</script>
+
+</body>
+</html>

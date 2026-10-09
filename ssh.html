@@ -11,6 +11,7 @@
 
 <header>
   <a href="/">← deep space</a>
+  <nav class="sheets"></nav>
   <h1>ssh</h1>
   <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
   <input id="filter" type="search" placeholder="filter… (key, tunnel, config, scp)" autocomplete="off">
@@ -82,6 +83,7 @@ ssh -t user@host 'sudo systemctl restart myapp'</pre></div>
 
   <div class="card">
     <h3>Debug a connection</h3>
+    <p class="note">Check the hostname resolves first: <a href="/tools#dns">/dns</a></p>
     <div class="code"><pre>ssh -v user@host
 ssh -vvv user@host</pre></div>
   </div>

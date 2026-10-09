@@ -11,6 +11,7 @@
 
 <header>
   <a href="/">← deep space</a>
+  <nav class="sheets"></nav>
   <h1>systemd</h1>
   <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
   <input id="filter" type="search" placeholder="filter… (journal, timer, unit, boot)" autocomplete="off">
@@ -214,7 +215,7 @@ DynamicUser=yes</pre></div>
 
   <div class="card">
     <h3>Timer unit (cron replacement)</h3>
-    <p class="note">/etc/systemd/system/backup.timer, which runs backup.service</p>
+    <p class="note">/etc/systemd/system/backup.timer, which runs backup.service. Coming from cron? <a href="/tools#cron">/cron</a> explains cron lines.</p>
     <div class="code"><pre>[Unit]
 Description=Nightly backup
 
@@ -293,6 +294,7 @@ sudo systemctl isolate rescue.target</pre></div>
 
   <div class="card">
     <h3>Hostname, time, locale</h3>
+    <p class="note">Convert times between zones with <a href="/tools#tz">/tz</a>.</p>
     <div class="code"><pre>hostnamectl
 sudo hostnamectl set-hostname box01
 timedatectl
