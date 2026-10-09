@@ -36,6 +36,9 @@ const page = (host) => String.raw`
    --- endpoints ------------------------------------------------------
    /ip          your public IP address, plain text
    /ip?extra=1  the above, plus country, network, colo, ...
+   /cidr        subnet calculator       /cidr/10.0.0.0/22
+   /dns         DNS lookup              /dns/example.com/mx
+   /cron        explain a cron line     /cron/*/15_9-17_*_*_1-5
    /?tty        this page, from a browser
 
    --- cheat sheets ---------------------------------------------------
