@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>firewalld cheat sheet</title>
+<link rel="stylesheet" href="/cheatsheet.css">
+</head>
+<body>
+<main>
+
+<header>
+  <a href="/">← deep space</a>
+  <h1>firewalld</h1>
+  <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
+  <input id="filter" type="search" placeholder="filter… (port, zone, rich, forward)" autocomplete="off">
+</header>
+
+<section>
+  <h2>Basics</h2>
+
+  <div class="card">
+    <h3>Status &amp; service control</h3>
+    <div class="code"><pre>sudo firewall-cmd --state
+sudo systemctl status firewalld
+sudo systemctl enable --now firewalld</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Make runtime changes permanent</h3>
+    <p class="note">Without <code class="inline">--permanent</code>, changes are lost on reload/reboot. Either test live then save, or write permanent then reload.</p>
+    <div class="code"><pre>sudo firewall-cmd --runtime-to-permanent
+<span class="c"># or</span>
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Temporary rule (auto-expires)</h3>
+    <div class="code"><pre>sudo firewall-cmd --add-port=8080/tcp --timeout=10m</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Inspect</h2>
+
+  <div class="card">
+    <h3>Everything in the active zones</h3>
+    <div class="code"><pre>sudo firewall-cmd --get-active-zones
+sudo firewall-cmd --list-all
+sudo firewall-cmd --list-all-zones</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>One zone</h3>
+    <div class="code"><pre>sudo firewall-cmd --zone=public --list-all</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Just services / ports</h3>
+    <div class="code"><pre>sudo firewall-cmd --list-services
+sudo firewall-cmd --list-ports</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Available predefined services</h3>
+    <div class="code"><pre>sudo firewall-cmd --get-services
+sudo firewall-cmd --info-service=ssh</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Zones</h2>
+
+  <div class="card">
+    <h3>Default zone</h3>
+    <div class="code"><pre>sudo firewall-cmd --get-default-zone
+sudo firewall-cmd --set-default-zone=home</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Which zone is an interface in?</h3>
+    <div class="code"><pre>sudo firewall-cmd --get-zone-of-interface=eth0</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Move interface to a zone</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --zone=internal --change-interface=eth1
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Bind a source network to a zone</h3>
+    <p class="note">Traffic from this subnet uses the zone's rules regardless of interface.</p>
+    <div class="code"><pre>sudo firewall-cmd --permanent --zone=trusted --add-source=192.168.1.0/24
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Create a new zone</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --new-zone=lab
+sudo firewall-cmd --reload</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Services &amp; ports</h2>
+
+  <div class="card">
+    <h3>Open a service</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Close a service</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --remove-service=cockpit
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Open a port / range</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --permanent --add-port=60000-61000/udp
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Close a port</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --remove-port=8080/tcp
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Check if something is open</h3>
+    <div class="code"><pre>sudo firewall-cmd --query-service=ssh
+sudo firewall-cmd --query-port=8080/tcp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Custom service definition</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --new-service=myapp
+sudo firewall-cmd --permanent --service=myapp --add-port=9000/tcp
+sudo firewall-cmd --permanent --service=myapp --set-description="My app"
+sudo firewall-cmd --reload
+sudo firewall-cmd --permanent --add-service=myapp</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Rich rules</h2>
+
+  <div class="card">
+    <h3>Allow a port from one IP only</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="10.0.0.5" port port="5432" protocol="tcp" accept'
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Allow SSH from a subnet</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.1.0/24" service name="ssh" accept'
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Block an IP</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="203.0.113.7" drop'
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Rate-limit + log</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-rich-rule='rule service name="ssh" log prefix="ssh: " level="info" limit value="3/m" accept'
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>List / remove rich rules</h3>
+    <p class="note">Remove with the exact same string you added.</p>
+    <div class="code"><pre>sudo firewall-cmd --list-rich-rules
+sudo firewall-cmd --permanent --remove-rich-rule='rule family="ipv4" source address="203.0.113.7" drop'</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>NAT &amp; forwarding</h2>
+
+  <div class="card">
+    <h3>Forward a local port</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-forward-port=port=80:proto=tcp:toport=8080
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Forward to another host</h3>
+    <p class="note">Needs masquerade on the zone.</p>
+    <div class="code"><pre>sudo firewall-cmd --permanent --add-masquerade
+sudo firewall-cmd --permanent --add-forward-port=port=2222:proto=tcp:toport=22:toaddr=192.168.1.50
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Masquerade (NAT / router)</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --zone=external --add-masquerade
+sudo firewall-cmd --query-masquerade
+sudo firewall-cmd --reload</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>IP sets</h2>
+
+  <div class="card">
+    <h3>Blocklist via ipset</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --new-ipset=blocklist --type=hash:net
+sudo firewall-cmd --permanent --ipset=blocklist --add-entry=198.51.100.0/24
+sudo firewall-cmd --permanent --zone=drop --add-source=ipset:blocklist
+sudo firewall-cmd --reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Load entries from a file</h3>
+    <div class="code"><pre>sudo firewall-cmd --permanent --ipset=blocklist --add-entries-from-file=bad-ips.txt
+sudo firewall-cmd --reload</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Emergency &amp; debugging</h2>
+
+  <div class="card">
+    <h3>Panic mode (drop ALL traffic)</h3>
+    <p class="note">This will kill your SSH session if you're remote.</p>
+    <div class="code"><pre>sudo firewall-cmd --panic-on
+sudo firewall-cmd --panic-off
+sudo firewall-cmd --query-panic</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Log denied packets</h3>
+    <div class="code"><pre>sudo firewall-cmd --set-log-denied=all
+sudo journalctl -kf | grep -i reject</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Reload vs complete reload</h3>
+    <p class="note"><code class="inline">--complete-reload</code> also drops connection state.</p>
+    <div class="code"><pre>sudo firewall-cmd --reload
+sudo firewall-cmd --complete-reload</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Validate config / where it lives</h3>
+    <div class="code"><pre>sudo firewall-cmd --check-config
+ls /etc/firewalld/zones/
+ls /usr/lib/firewalld/services/</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>See the generated nftables ruleset</h3>
+    <div class="code"><pre>sudo nft list ruleset</pre></div>
+  </div>
+</section>
+
+<p id="empty" hidden>Nothing matches.</p>
+
+</main>
+
+<script src="/cheatsheet.js"></script>
+
+</body>
+</html>

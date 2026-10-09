@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>git cheat sheet</title>
+<link rel="stylesheet" href="/cheatsheet.css">
+</head>
+<body>
+<main>
+
+<header>
+  <a href="/">← deep space</a>
+  <h1>git</h1>
+  <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
+  <input id="filter" type="search" placeholder="filter… (undo, rebase, stash, branch)" autocomplete="off">
+</header>
+
+<section>
+  <h2>Setup</h2>
+
+  <div class="card">
+    <h3>Identity &amp; defaults</h3>
+    <div class="code"><pre>git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main
+git config --global pull.rebase true
+git config --global push.autoSetupRemote true</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Handy aliases</h3>
+    <div class="code"><pre>git config --global alias.st "status -sb"
+git config --global alias.lg "log --oneline --graph --decorate --all"
+git config --global alias.amend "commit --amend --no-edit"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Where is a setting coming from?</h3>
+    <div class="code"><pre>git config --list --show-origin</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Everyday</h2>
+
+  <div class="card">
+    <h3>Stage &amp; commit</h3>
+    <div class="code"><pre>git add -p
+git commit -m "message"
+git commit -am "message"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>What changed?</h3>
+    <div class="code"><pre>git status -sb
+git diff
+git diff --staged
+git diff main...HEAD</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>History</h3>
+    <div class="code"><pre>git log --oneline --graph --decorate
+git log -p -- path/to/file
+git log -S "someFunction"
+git log --author="Your Name" --since="2 weeks ago"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Who wrote this line?</h3>
+    <div class="code"><pre>git blame -L 40,60 script.js
+git show &lt;commit&gt;</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Branches</h2>
+
+  <div class="card">
+    <h3>Create / switch</h3>
+    <div class="code"><pre>git switch -c feature/thing
+git switch main
+git switch -</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>List</h3>
+    <div class="code"><pre>git branch -vv
+git branch -a
+git branch --merged main</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Rename / delete</h3>
+    <div class="code"><pre>git branch -m new-name
+git branch -d feature/thing
+git branch -D feature/thing
+git push origin --delete feature/thing</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Clean up branches gone from the remote</h3>
+    <div class="code"><pre>git fetch --prune
+git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -D</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Remotes</h2>
+
+  <div class="card">
+    <h3>Manage remotes</h3>
+    <div class="code"><pre>git remote -v
+git remote add origin git@github.com:user/repo.git
+git remote set-url origin git@github.com:user/repo.git</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Sync</h3>
+    <div class="code"><pre>git fetch --all --prune
+git pull --rebase
+git push -u origin HEAD</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Safe force push</h3>
+    <p class="note">Refuses to push if someone else pushed in the meantime.</p>
+    <div class="code"><pre>git push --force-with-lease</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Undo</h2>
+
+  <div class="card">
+    <h3>Discard changes to a file</h3>
+    <div class="code"><pre>git restore path/to/file
+git restore --staged path/to/file</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Fix the last commit</h3>
+    <div class="code"><pre>git commit --amend
+git commit --amend --no-edit</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Undo last commit, keep changes</h3>
+    <div class="code"><pre>git reset --soft HEAD~1   <span class="c"># keep staged</span>
+git reset HEAD~1          <span class="c"># keep unstaged</span></pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Throw away local commits and changes</h3>
+    <p class="note">Destructive. Uncommitted work is gone for good.</p>
+    <div class="code"><pre>git reset --hard origin/main</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Undo a pushed commit</h3>
+    <div class="code"><pre>git revert &lt;commit&gt;</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Recover "lost" commits</h3>
+    <div class="code"><pre>git reflog
+git switch -c rescue HEAD@{3}</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Remove untracked files</h3>
+    <div class="code"><pre>git clean -nd   <span class="c"># dry run</span>
+git clean -fd</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Stash</h2>
+
+  <div class="card">
+    <h3>Stash work in progress</h3>
+    <div class="code"><pre>git stash push -m "wip"
+git stash push -u -m "wip incl. untracked"
+git stash list</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Get it back</h3>
+    <div class="code"><pre>git stash pop
+git stash apply stash@{1}
+git stash show -p stash@{0}
+git stash drop stash@{0}</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Rebase &amp; merge</h2>
+
+  <div class="card">
+    <h3>Rebase on latest main</h3>
+    <div class="code"><pre>git fetch
+git rebase origin/main</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Squash / reorder commits</h3>
+    <div class="code"><pre>git rebase -i HEAD~5
+git rebase -i --autosquash origin/main</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Fixup commit for later autosquash</h3>
+    <div class="code"><pre>git commit --fixup=&lt;commit&gt;
+git rebase -i --autosquash origin/main</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Conflicts</h3>
+    <div class="code"><pre>git status
+git add path/to/resolved
+git rebase --continue
+git rebase --abort
+git merge --abort</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Take one side of a conflict</h3>
+    <p class="note">During a rebase, "ours" and "theirs" are swapped.</p>
+    <div class="code"><pre>git checkout --ours path/to/file
+git checkout --theirs path/to/file</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Cherry-pick</h3>
+    <div class="code"><pre>git cherry-pick &lt;commit&gt;
+git cherry-pick A^..B</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Tags</h2>
+
+  <div class="card">
+    <h3>Create &amp; push</h3>
+    <div class="code"><pre>git tag -a v1.2.0 -m "v1.2.0"
+git push origin v1.2.0
+git push --tags</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Delete</h3>
+    <div class="code"><pre>git tag -d v1.2.0
+git push origin --delete v1.2.0</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Power tools</h2>
+
+  <div class="card">
+    <h3>Find the commit that broke it</h3>
+    <div class="code"><pre>git bisect start
+git bisect bad
+git bisect good v1.0.0
+<span class="c"># test, then mark each step: git bisect good / bad</span>
+git bisect reset</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Automated bisect</h3>
+    <div class="code"><pre>git bisect start HEAD v1.0.0
+git bisect run ./test.sh</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Second working copy of another branch</h3>
+    <div class="code"><pre>git worktree add ../repo-hotfix hotfix
+git worktree list
+git worktree remove ../repo-hotfix</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Search tracked files</h3>
+    <div class="code"><pre>git grep -n "TODO"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Stop tracking a file but keep it on disk</h3>
+    <div class="code"><pre>git rm --cached .env
+echo ".env" &gt;&gt; .gitignore</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Shallow clone</h3>
+    <div class="code"><pre>git clone --depth 1 git@github.com:user/repo.git</pre></div>
+  </div>
+</section>
+
+<p id="empty" hidden>Nothing matches.</p>
+
+</main>
+
+<script src="/cheatsheet.js"></script>
+
+</body>
+</html>

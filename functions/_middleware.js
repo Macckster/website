@@ -38,6 +38,9 @@ const page = (host) => String.raw`
    /ip?extra=1  the above, plus country, network, colo, ...
    /?tty        this page, from a browser
 
+   --- cheat sheets ---------------------------------------------------
+   /firewalld   /systemd   /git   /ssh
+
    --- links ----------------------------------------------------------
    github       https://github.com/Macckster
    --- notes ----------------------------------------------------------
@@ -48,17 +51,67 @@ const page = (host) => String.raw`
 
 `;
 
-export function onRequest({ request, next }) {
+// Cheat sheet pages. Terminal clients get a plain-text rendering generated
+// from the HTML page itself, so the .html file stays the only source.
+const CHEATSHEETS = new Set(["/firewalld", "/systemd", "/git", "/ssh"]);
+
+const RULE_WIDTH = 66;
+
+const decode = (s) => s
+    .replace(/<[^>]+>/g, "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
+function cheatsheetToText(html) {
+    const out = [""];
+    const re = /<(h1|h2|h3|pre)[^>]*>([\s\S]*?)<\/\1>|<p class="note">([\s\S]*?)<\/p>/g;
+
+    for (const [, tag, body, note] of html.matchAll(re)) {
+        if (note !== undefined) {
+            out.push(`     # ${decode(note).trim()}`);
+            continue;
+        }
+        const text = decode(body);
+        if (tag === "h1") {
+            const title = `${text.trim()} cheat sheet`;
+            out.push(`   ${title}`, `   ${"=".repeat(title.length)}`);
+        } else if (tag === "h2") {
+            const head = `--- ${text.trim().toLowerCase()} `;
+            out.push("", "", `   ${head.padEnd(RULE_WIDTH, "-")}`);
+        } else if (tag === "h3") {
+            out.push("", `   ${text.trim()}`);
+        } else {
+            out.push(...text.replace(/\n+$/, "").split("\n").map((l) => `       ${l}`));
+        }
+    }
+
+    out.push("", "");
+    return out.join("\n");
+}
+
+const plain = (body) => new Response(body, {
+    headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+    },
+});
+
+export async function onRequest({ request, next }) {
     const url = new URL(request.url);
     const terminal = TERMINAL_UA.test(request.headers.get("user-agent") || "");
+    const wantsText = terminal || url.searchParams.has("tty");
 
-    if (url.pathname === "/" && (terminal || url.searchParams.has("tty"))) {
-        return new Response(page(url.host), {
-            headers: {
-                "content-type": "text/plain; charset=utf-8",
-                "cache-control": "no-store",
-            },
-        });
+    if (url.pathname === "/" && wantsText) {
+        return plain(page(url.host));
+    }
+
+    if (CHEATSHEETS.has(url.pathname) && wantsText) {
+        const res = await next();
+        if (!res.ok) return res;
+        return plain(cheatsheetToText(await res.text()));
     }
 
     return next();

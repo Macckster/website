@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>systemd cheat sheet</title>
+<link rel="stylesheet" href="/cheatsheet.css">
+</head>
+<body>
+<main>
+
+<header>
+  <a href="/">← deep space</a>
+  <h1>systemd</h1>
+  <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
+  <input id="filter" type="search" placeholder="filter… (journal, timer, unit, boot)" autocomplete="off">
+</header>
+
+<section>
+  <h2>Services</h2>
+
+  <div class="card">
+    <h3>Start / stop / restart</h3>
+    <div class="code"><pre>sudo systemctl start myapp
+sudo systemctl stop myapp
+sudo systemctl restart myapp
+sudo systemctl reload myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Enable at boot (and start now)</h3>
+    <div class="code"><pre>sudo systemctl enable --now myapp
+sudo systemctl disable --now myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Status</h3>
+    <div class="code"><pre>systemctl status myapp
+systemctl is-active myapp
+systemctl is-enabled myapp
+systemctl is-failed myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Prevent a unit from ever starting</h3>
+    <div class="code"><pre>sudo systemctl mask myapp
+sudo systemctl unmask myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Reload after editing unit files</h3>
+    <div class="code"><pre>sudo systemctl daemon-reload</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Inspect</h2>
+
+  <div class="card">
+    <h3>List units</h3>
+    <div class="code"><pre>systemctl list-units --type=service
+systemctl list-units --type=service --state=running
+systemctl list-unit-files --state=enabled</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>What's broken?</h3>
+    <div class="code"><pre>systemctl --failed
+sudo systemctl reset-failed</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Show a unit file and its properties</h3>
+    <div class="code"><pre>systemctl cat myapp
+systemctl show myapp
+systemctl show myapp -p MainPID -p ActiveState</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Dependencies</h3>
+    <div class="code"><pre>systemctl list-dependencies myapp
+systemctl list-dependencies --reverse myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Boot performance</h3>
+    <div class="code"><pre>systemd-analyze
+systemd-analyze blame
+systemd-analyze critical-chain</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Check a unit file for errors</h3>
+    <div class="code"><pre>systemd-analyze verify /etc/systemd/system/myapp.service</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Journal (logs)</h2>
+
+  <div class="card">
+    <h3>Logs for a unit</h3>
+    <div class="code"><pre>journalctl -u myapp
+journalctl -u myapp -f
+journalctl -u myapp -n 100 --no-pager</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>This boot / previous boot</h3>
+    <div class="code"><pre>journalctl -b
+journalctl -b -1
+journalctl --list-boots</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>By time</h3>
+    <div class="code"><pre>journalctl --since "1 hour ago"
+journalctl --since today
+journalctl --since "2026-10-01 09:00" --until "2026-10-01 10:00"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Errors only</h3>
+    <div class="code"><pre>journalctl -p err -b
+journalctl -p warning..err -u myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Kernel messages</h3>
+    <div class="code"><pre>journalctl -k
+journalctl -k -f</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Jump to end / explain errors</h3>
+    <div class="code"><pre>journalctl -e
+journalctl -xeu myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Output formats</h3>
+    <div class="code"><pre>journalctl -u myapp -o cat
+journalctl -u myapp -o json-pretty
+journalctl -u myapp -o short-iso</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Disk usage &amp; cleanup</h3>
+    <div class="code"><pre>journalctl --disk-usage
+sudo journalctl --vacuum-time=2weeks
+sudo journalctl --vacuum-size=500M</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Unit files</h2>
+
+  <div class="card">
+    <h3>Override part of a unit (drop-in)</h3>
+    <p class="note">Writes to /etc/systemd/system/myapp.service.d/override.conf and reloads for you. Add --full to edit a full copy instead.</p>
+    <div class="code"><pre>sudo systemctl edit myapp
+sudo systemctl revert myapp</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Simple service</h3>
+    <p class="note">/etc/systemd/system/myapp.service</p>
+    <div class="code"><pre>[Unit]
+Description=My app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=myapp
+WorkingDirectory=/opt/myapp
+ExecStart=/opt/myapp/bin/server --port 9000
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+EnvironmentFile=-/etc/myapp/env
+
+[Install]
+WantedBy=multi-user.target</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Hardening options</h3>
+    <p class="note">Add to [Service]. Check the result with systemd-analyze security myapp.</p>
+    <div class="code"><pre>NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/myapp
+DynamicUser=yes</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Unit file locations</h3>
+    <div class="code"><pre>/etc/systemd/system/        <span class="c"># yours (wins)</span>
+/run/systemd/system/        <span class="c"># runtime</span>
+/usr/lib/systemd/system/    <span class="c"># packages</span>
+~/.config/systemd/user/     <span class="c"># user units</span></pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Timers</h2>
+
+  <div class="card">
+    <h3>List timers</h3>
+    <div class="code"><pre>systemctl list-timers --all</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Timer unit (cron replacement)</h3>
+    <p class="note">/etc/systemd/system/backup.timer, which runs backup.service</p>
+    <div class="code"><pre>[Unit]
+Description=Nightly backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Matching oneshot service</h3>
+    <p class="note">/etc/systemd/system/backup.service</p>
+    <div class="code"><pre>[Unit]
+Description=Nightly backup
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/backup.sh</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Enable the timer, not the service</h3>
+    <div class="code"><pre>sudo systemctl daemon-reload
+sudo systemctl enable --now backup.timer</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Test an OnCalendar expression</h3>
+    <div class="code"><pre>systemd-analyze calendar "Mon..Fri 09:00"
+systemd-analyze calendar --iterations=5 "*:0/15"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>One-off delayed job</h3>
+    <div class="code"><pre>sudo systemd-run --on-active=30m /usr/local/bin/cleanup.sh
+sudo systemd-run --on-calendar="2026-10-10 02:00" /usr/local/bin/migrate.sh</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>User services</h2>
+
+  <div class="card">
+    <h3>Manage your own units</h3>
+    <div class="code"><pre>systemctl --user status myapp
+systemctl --user enable --now myapp
+journalctl --user -u myapp -f</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Keep user services running after logout</h3>
+    <div class="code"><pre>sudo loginctl enable-linger $USER</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>System</h2>
+
+  <div class="card">
+    <h3>Power</h3>
+    <div class="code"><pre>systemctl reboot
+systemctl poweroff
+systemctl suspend
+systemctl soft-reboot</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Boot target</h3>
+    <div class="code"><pre>systemctl get-default
+sudo systemctl set-default multi-user.target
+sudo systemctl isolate rescue.target</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Hostname, time, locale</h3>
+    <div class="code"><pre>hostnamectl
+sudo hostnamectl set-hostname box01
+timedatectl
+sudo timedatectl set-timezone Etc/UTC
+localectl</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Sessions</h3>
+    <div class="code"><pre>loginctl list-sessions
+loginctl list-users</pre></div>
+  </div>
+</section>
+
+<p id="empty" hidden>Nothing matches.</p>
+
+</main>
+
+<script src="/cheatsheet.js"></script>
+
+</body>
+</html>

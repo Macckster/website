@@ -1,0 +1,116 @@
+/* Shared styles for the cheat sheet pages (/firewalld, /systemd, ...) */
+
+:root {
+  --bg: #020617;
+  --panel: #0f172a;
+  --border: #22d3ee33;
+  --accent: #22d3ee;
+  --accent-2: #a855f7;
+  --text: #f9fafb;
+  --muted: #94a3b8;
+  --mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #0f172a 0%, var(--bg) 70%) fixed;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  padding: 2rem 1rem 4rem;
+}
+
+main { max-width: 860px; margin: 0 auto; }
+
+header { margin-bottom: 1.5rem; }
+header a { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+header a:hover { color: var(--accent); }
+h1 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 2rem;
+  font-family: var(--mono);
+  text-shadow: 0 0 20px #22d3ee55;
+}
+header p { margin: 0; color: var(--muted); }
+
+nav.sheets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+nav.sheets a {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+nav.sheets a.current { color: var(--panel); background: var(--accent); border-color: var(--accent); }
+
+#filter {
+  width: 100%;
+  margin: 1.25rem 0 0.5rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  font: inherit;
+  font-family: var(--mono);
+}
+#filter:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #22d3ee22; }
+
+h2 {
+  margin: 2.25rem 0 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.card { margin-bottom: 1rem; }
+.card h3 { margin: 0 0 0.35rem; font-size: 0.95rem; font-weight: 600; }
+.card .note { margin: 0 0 0.4rem; font-size: 0.85rem; color: var(--muted); }
+
+.code {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+pre {
+  margin: 0;
+  padding: 0.8rem 4.5rem 0.8rem 0.9rem;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.c { color: var(--muted); } /* comments */
+
+.copy {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  padding: 0.3rem 0.6rem;
+  background: #22d3ee14;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.copy:hover { background: #22d3ee30; color: #fff; }
+.copy.done { background: var(--accent); color: var(--panel); }
+
+code.inline {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: #22d3ee14;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  color: var(--text);
+}
+
+[hidden] { display: none !important; }
+#empty { color: var(--muted); text-align: center; margin-top: 2rem; }

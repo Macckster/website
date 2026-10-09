@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ssh cheat sheet</title>
+<link rel="stylesheet" href="/cheatsheet.css">
+</head>
+<body>
+<main>
+
+<header>
+  <a href="/">← deep space</a>
+  <h1>ssh</h1>
+  <p>Quick reference. Press <code class="inline">/</code> to filter.</p>
+  <input id="filter" type="search" placeholder="filter… (key, tunnel, config, scp)" autocomplete="off">
+</header>
+
+<section>
+  <h2>Keys</h2>
+
+  <div class="card">
+    <h3>Generate a key</h3>
+    <div class="code"><pre>ssh-keygen -t ed25519 -C "you@example.com"
+ssh-keygen -t ed25519 -f ~/.ssh/id_work -C "work"</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Install your key on a server</h3>
+    <div class="code"><pre>ssh-copy-id user@host
+ssh-copy-id -i ~/.ssh/id_work.pub user@host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Without ssh-copy-id</h3>
+    <div class="code"><pre>cat ~/.ssh/id_ed25519.pub | ssh user@host 'mkdir -p ~/.ssh &amp;&amp; chmod 700 ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys &amp;&amp; chmod 600 ~/.ssh/authorized_keys'</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Agent</h3>
+    <div class="code"><pre>eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+ssh-add -l
+ssh-add -D</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Change passphrase / show fingerprint</h3>
+    <div class="code"><pre>ssh-keygen -p -f ~/.ssh/id_ed25519
+ssh-keygen -lf ~/.ssh/id_ed25519.pub</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Fix permissions</h3>
+    <p class="note">ssh silently ignores keys and config files that are too open.</p>
+    <div class="code"><pre>chmod 700 ~/.ssh
+chmod 600 ~/.ssh/id_* ~/.ssh/config ~/.ssh/authorized_keys
+chmod 644 ~/.ssh/*.pub</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Connecting</h2>
+
+  <div class="card">
+    <h3>Basics</h3>
+    <div class="code"><pre>ssh user@host
+ssh -p 2222 user@host
+ssh -i ~/.ssh/id_work user@host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Run a command remotely</h3>
+    <div class="code"><pre>ssh user@host 'uptime'
+ssh -t user@host 'sudo systemctl restart myapp'</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Through a jump host</h3>
+    <div class="code"><pre>ssh -J user@bastion user@internal-host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Debug a connection</h3>
+    <div class="code"><pre>ssh -v user@host
+ssh -vvv user@host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Host key changed / remove old entry</h3>
+    <div class="code"><pre>ssh-keygen -R host
+ssh-keygen -R "[host]:2222"</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Config file</h2>
+
+  <div class="card">
+    <h3>~/.ssh/config</h3>
+    <p class="note">Then just: ssh web</p>
+    <div class="code"><pre>Host web
+    HostName 203.0.113.10
+    User deploy
+    Port 2222
+    IdentityFile ~/.ssh/id_work
+    IdentitiesOnly yes
+
+Host internal
+    HostName 10.0.0.20
+    User deploy
+    ProxyJump web</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Defaults for every host</h3>
+    <p class="note">Put Host * at the bottom. The first value found wins.</p>
+    <div class="code"><pre>Host *
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    AddKeysToAgent yes</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Reuse connections (much faster reconnects)</h3>
+    <div class="code"><pre>Host *
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%r@%h:%p
+    ControlPersist 10m</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>See the effective config for a host</h3>
+    <div class="code"><pre>ssh -G web</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Tunnels</h2>
+
+  <div class="card">
+    <h3>Local forward (reach a remote service locally)</h3>
+    <p class="note">localhost:5432 on your machine connects to db:5432 as seen from host.</p>
+    <div class="code"><pre>ssh -L 5432:localhost:5432 user@host
+ssh -L 5432:db.internal:5432 user@host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Remote forward (expose a local service on the server)</h3>
+    <p class="note">host:8080 connects to localhost:3000 on your machine.</p>
+    <div class="code"><pre>ssh -R 8080:localhost:3000 user@host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>SOCKS proxy</h3>
+    <div class="code"><pre>ssh -D 1080 user@host
+curl --socks5-hostname localhost:1080 https://ifconfig.me</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Tunnel in the background, no shell</h3>
+    <div class="code"><pre>ssh -fN -L 5432:localhost:5432 user@host</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Escape sequences (type at start of line)</h3>
+    <div class="code"><pre>~.    <span class="c"># kill a frozen session</span>
+~C    <span class="c"># open command line, add forwards: -L 8080:localhost:80</span>
+~#    <span class="c"># list forwarded connections</span>
+~?    <span class="c"># help</span></pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Copying files</h2>
+
+  <div class="card">
+    <h3>scp</h3>
+    <div class="code"><pre>scp file.txt user@host:/tmp/
+scp user@host:/var/log/app.log .
+scp -r ./dir user@host:~/
+scp -P 2222 file.txt user@host:~/</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>rsync over ssh</h3>
+    <p class="note">The trailing slash on the source copies the contents rather than the directory itself.</p>
+    <div class="code"><pre>rsync -avzP ./site/ user@host:/var/www/site/
+rsync -avzP --delete ./site/ user@host:/var/www/site/
+rsync -avzP -e "ssh -p 2222" ./site/ user@host:/var/www/site/</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>sftp</h3>
+    <div class="code"><pre>sftp user@host
+<span class="c"># put / get / ls / lls / cd / lcd</span></pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Pipe a tarball</h3>
+    <div class="code"><pre>tar czf - ./dir | ssh user@host 'tar xzf - -C /opt'</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Mount a remote directory</h3>
+    <div class="code"><pre>sshfs user@host:/var/www ~/mnt/www
+fusermount -u ~/mnt/www</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>Server (sshd)</h2>
+
+  <div class="card">
+    <h3>Harden /etc/ssh/sshd_config</h3>
+    <p class="note">Or drop a file into /etc/ssh/sshd_config.d/. Test that key login works before turning off passwords.</p>
+    <div class="code"><pre>PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+AllowUsers deploy</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Validate config, then reload</h3>
+    <div class="code"><pre>sudo sshd -t
+sudo systemctl reload sshd</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Change port (Fedora / SELinux / firewalld)</h3>
+    <div class="code"><pre>sudo semanage port -a -t ssh_port_t -p tcp 2222
+sudo firewall-cmd --permanent --add-port=2222/tcp
+sudo firewall-cmd --reload
+<span class="c"># set "Port 2222" in sshd_config, then:</span>
+sudo systemctl restart sshd</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Watch auth attempts</h3>
+    <div class="code"><pre>sudo journalctl -u sshd -f
+sudo journalctl -u sshd --since today | grep -i failed</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Server host key fingerprints</h3>
+    <div class="code"><pre>for f in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$f"; done</pre></div>
+  </div>
+</section>
+
+<p id="empty" hidden>Nothing matches.</p>
+
+</main>
+
+<script src="/cheatsheet.js"></script>
+
+</body>
+</html>
