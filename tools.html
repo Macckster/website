@@ -92,8 +92,10 @@
   .out pre { min-height: calc(var(--lines, 3) * 1.55em + 1.6rem); transition: opacity 0.15s; }
   #cidr { --lines: 10; }
   #dns  { --lines: 13; }
-  #cron { --lines: 9; }
+  #cron { --lines: 10; }
   #tz   { --lines: 5; }
+  #headers { --lines: 12; }
+  #uuid { --lines: 1; }
   .tool.loading .out pre { opacity: 0.5; }
   .tool.error .out { border-color: #f8717166; }
   .tool.error .out pre { color: #fca5a5; }
@@ -116,6 +118,8 @@
     <a href="#dns">dns</a>
     <a href="#cron">cron</a>
     <a href="#tz">tz</a>
+    <a href="#headers">headers</a>
+    <a href="#uuid">uuid</a>
   </div>
 </header>
 
@@ -202,6 +206,36 @@
       <div class="zone-rows"></div>
       <button type="button" class="zone-btn add">+ add zone</button>
     </div>
+  </form>
+  <div class="code out"><pre></pre></div>
+  <div class="code cmd"><pre></pre></div>
+</section>
+
+<!-- ─── headers ──────────────────────────────────────────────────────── -->
+<section class="tool" id="headers">
+  <h2>headers <span>what the server received</span></h2>
+  <form class="fields">
+    <label class="check"><input type="checkbox" name="all"> include headers added by Cloudflare</label>
+  </form>
+  <p class="hint">These are the headers of this page's <code>fetch()</code>, which differ a bit from a normal page load.</p>
+  <div class="code out"><pre></pre></div>
+  <div class="code cmd"><pre></pre></div>
+</section>
+
+<!-- ─── uuid ─────────────────────────────────────────────────────────── -->
+<section class="tool" id="uuid">
+  <h2>uuid <span>random identifiers</span></h2>
+  <form class="fields">
+    <label>How many
+      <input type="number" name="count" value="1" min="1" max="100">
+    </label>
+    <label>Version
+      <select name="version">
+        <option value="4">v4 (random)</option>
+        <option value="7">v7 (time-ordered)</option>
+      </select>
+    </label>
+    <button class="go" type="submit">Generate</button>
   </form>
   <div class="code out"><pre></pre></div>
   <div class="code cmd"><pre></pre></div>
@@ -456,6 +490,19 @@
         + '?here=' + encodeURIComponent(localZone);
     });
   })();
+
+  // ─── headers ────────────────────────────────────────────────────────
+  tool('headers', function (f) {
+    return '/headers' + (f.elements.all.checked ? '?all' : '');
+  });
+
+  // ─── uuid ───────────────────────────────────────────────────────────
+  tool('uuid', function (f) {
+    const count = Number(f.elements.count.value);
+    if (!Number.isInteger(count) || count < 1 || count > 100) return '!pick a number from 1 to 100';
+    const version = f.elements.version.value;
+    return '/uuid' + (count > 1 ? '/' + count : '') + (version === '7' ? '?v=7' : '');
+  });
 </script>
 
 </body>

@@ -19,6 +19,7 @@ const USAGE = `usage (quote it so your shell leaves the * alone; _ stands for a 
   curl -L '<host>/cron/0_3_*_*_*?tz=Europe/Berlin'
 
 fields: minute hour day-of-month month day-of-week
+also prints the equivalent systemd OnCalendar= line(s).
 next runs are shown in your timezone unless ?tz= is given.
 `;
 
@@ -174,6 +175,47 @@ function explain([minute, hour, dom, month, dow]) {
     return sentence[0].toUpperCase() + sentence.slice(1);
 }
 
+// ─── systemd ────────────────────────────────────────────────────────────────
+
+// One cron item as an OnCalendar= component: "*/15" -> "00/15",
+// "9-17" -> "09..17", "1-20/2" -> "01..20/2".
+function calItem(item, field) {
+    if (item.all) return item.step === 1 ? "*" : `${pad(field.min)}/${item.step}`;
+    if (item.step === 1) return item.from === item.to ? pad(item.from) : `${pad(item.from)}..${pad(item.to)}`;
+    return item.to === field.max ? `${pad(item.from)}/${item.step}` : `${pad(item.from)}..${pad(item.to)}/${item.step}`;
+}
+
+const calField = (parsed, field) => (parsed.every ? "*" : parsed.items.map((i) => calItem(i, field)).join(","));
+
+// Weekdays as "Mon..Fri" / "Mon,Wed,Fri", Monday first; "" for every day.
+function calWeekdays(dow) {
+    const order = [1, 2, 3, 4, 5, 6, 0].filter((d) => dow.set[d]);
+    if (order.length === 7) return "";
+    const runs = [];
+    for (const d of order) {
+        const last = runs.at(-1);
+        if (last && (last.at(-1) + 1) % 7 === d) last.push(d);
+        else runs.push([d]);
+    }
+    const name = (d) => DAYS[d].slice(0, 3);
+    return runs.map((r) => (r.length >= 3 ? `${name(r[0])}..${name(r.at(-1))}` : r.map(name).join(","))).join(",");
+}
+
+// The equivalent OnCalendar= lines. Cron runs on a day if day-of-month OR
+// day-of-week matches (when both are restricted); systemd needs both, so
+// that case becomes two lines (a timer fires when any of them matches).
+function onCalendar([minute, hour, dom, month, dow]) {
+    const time = `${calField(hour, FIELDS[1])}:${calField(minute, FIELDS[0])}:00`;
+    const months = calField(month, FIELDS[3]);
+    const days = calWeekdays(dow);
+    const line = (weekdays, monthDays) => `${weekdays ? `${weekdays} ` : ""}*-${months}-${monthDays} ${time}`;
+
+    if (!dom.star && !dow.star) {
+        return days ? [line(days, "*"), line("", calField(dom, FIELDS[2]))] : [line("", "*")];
+    }
+    return [line(days, calField(dom, FIELDS[2]))];
+}
+
 // ─── Next runs ──────────────────────────────────────────────────────────────
 
 // Current wall-clock time in `tz`, as a "naive" UTC timestamp. All schedule
@@ -255,6 +297,7 @@ export function onRequest({ request }) {
     const lines = [
         `expression  ${expr}`,
         `meaning     ${explain(fields)}`,
+        ...onCalendar(fields).map((cal, i) => `${i ? "           " : "systemd    "} OnCalendar=${cal}`),
         "",
         `next runs (${tz})`,
         ...(runs.length

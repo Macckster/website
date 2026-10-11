@@ -46,6 +46,8 @@ const page = (host) => String.raw`
    /dns         DNS lookup              /dns/example.com/mx
    /cron        explain a cron line     /cron/*/15_9-17_*_*_1-5
    /tz          convert timezones       /tz/15:00/Europe/Berlin
+   /headers     the request headers you sent
+   /uuid        random UUIDs            /uuid/5?v=7
    /tools       all of the above with input fields, for browsers
    /?tty        this page, from a browser
 
