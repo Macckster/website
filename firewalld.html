@@ -214,6 +214,7 @@ sudo firewall-cmd --reload</pre></div>
 
   <div class="card">
     <h3>Blocklist via ipset</h3>
+    <p class="note">hash:net takes whole ranges. Check what one covers with <a href="/tools#cidr">/cidr</a>.</p>
     <div class="code"><pre>sudo firewall-cmd --permanent --new-ipset=blocklist --type=hash:net
 sudo firewall-cmd --permanent --ipset=blocklist --add-entry=198.51.100.0/24
 sudo firewall-cmd --permanent --zone=drop --add-source=ipset:blocklist

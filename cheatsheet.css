@@ -129,5 +129,24 @@ code.inline {
   color: var(--text);
 }
 
+/* Long paths in notes (/etc/systemd/system/...) would push the page sideways */
+header p, .note, .hint { overflow-wrap: anywhere; }
+
+/* Phones */
+@media (max-width: 600px) {
+  body { padding: 1.25rem 1rem 3rem; }
+  h1 { font-size: 1.6rem; }
+  h2 { margin-top: 1.75rem; }
+  pre { font-size: 0.8rem; }
+}
+
+/* Bigger tap targets on touch screens */
+@media (pointer: coarse) {
+  nav.sheets { gap: 0.5rem; }
+  nav.sheets a { padding: 0.4rem 0.8rem; }
+  .copy { padding: 0.45rem 0.75rem; }
+  pre { padding-right: 5.25rem; }
+}
+
 [hidden] { display: none !important; }
 #empty { color: var(--muted); text-align: center; margin-top: 2rem; }

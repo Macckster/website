@@ -240,6 +240,7 @@ sudo systemctl restart sshd</pre></div>
 
   <div class="card">
     <h3>Watch auth attempts</h3>
+    <p class="note">Who is that? Reverse-look-up an IP with <a href="/tools#dns">/dns</a>.</p>
     <div class="code"><pre>sudo journalctl -u sshd -f
 sudo journalctl -u sshd --since today | grep -i failed</pre></div>
   </div>

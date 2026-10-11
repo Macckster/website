@@ -86,6 +86,8 @@
 
   .hint { font-size: 0.78rem; color: var(--muted); margin: 0 0 0.6rem; }
   .hint code { font-family: var(--mono); color: var(--text); }
+  .hint a { color: var(--accent); text-decoration: none; font-family: var(--mono); }
+  .hint a:hover { text-decoration: underline; }
 
   /* Reserve room for each tool's first result so the page doesn't jump as
      the results arrive. --lines is roughly the default output's height. */
@@ -99,6 +101,18 @@
   .tool.loading .out pre { opacity: 0.5; }
   .tool.error .out { border-color: #f8717166; }
   .tool.error .out pre { color: #fca5a5; }
+
+  /* iOS zooms into inputs with text under 16px; the cron boxes need the
+     room once the text is that big */
+  @media (pointer: coarse) {
+    input, select { font-size: 16px; }
+    .jump a { padding: 0.4rem 0.75rem; }
+  }
+  @media (max-width: 600px) {
+    .cron-fields { gap: 0.35rem; }
+    .cron-fields input { padding-left: 0.2rem; padding-right: 0.2rem; }
+    form.fields label.grow, .zone-list { flex-basis: 100%; }
+  }
 
   .cmd { margin-top: 0.4rem; background: transparent; border-style: dashed; }
   .cmd pre { font-size: 0.8rem; color: var(--muted); padding-top: 0.55rem; padding-bottom: 0.55rem; min-height: calc(1.55em + 1.1rem); }
@@ -126,6 +140,7 @@
 <!-- ─── cidr ─────────────────────────────────────────────────────────── -->
 <section class="tool" id="cidr">
   <h2>cidr <span>subnet calculator</span></h2>
+  <p class="hint">Using it in a firewall rule? See <a href="/firewalld#rich-rules">/firewalld</a>.</p>
   <form class="fields">
     <label class="grow">IP address
       <input name="ip" value="192.168.1.0" placeholder="10.0.0.0  or  10.0.0.0/22" spellcheck="false" autocomplete="off">
@@ -141,6 +156,7 @@
 <!-- ─── dns ──────────────────────────────────────────────────────────── -->
 <section class="tool" id="dns">
   <h2>dns <span>lookup over 1.1.1.1</span></h2>
+  <p class="hint">Enter an IPv4 address for a reverse (PTR) lookup.</p>
   <form class="fields">
     <label class="grow">Hostname or IPv4
       <input name="name" value="example.com" placeholder="example.com" spellcheck="false" autocomplete="off">
@@ -184,7 +200,8 @@
   </form>
   <p class="hint">
     <code>*</code> any · <code>,</code> list · <code>-</code> range · <code>/</code> step ·
-    names like <code>mon</code> / <code>jan</code> work · paste a whole line into any box
+    names like <code>mon</code> / <code>jan</code> work · paste a whole line into any box ·
+    more on timers in <a href="/systemd#timers">/systemd</a>
   </p>
   <div class="code out"><pre></pre></div>
   <div class="code cmd"><pre></pre></div>
