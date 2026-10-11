@@ -1,28 +1,5 @@
-// Every cheat sheet page. Add new ones here (and to CHEATSHEETS in
-// functions/_middleware.js for the curl version).
-const SHEETS = ['firewalld', 'systemd', 'git', 'ssh'];
-// Other pages shown in the nav, after the sheets
-const EXTRA = ['tools'];
-
-// Nav between sheets. Pages include an empty <nav class="sheets"> so its
-// space is reserved before this runs (no layout jump); the links come from here.
-(function () {
-  let nav = document.querySelector('nav.sheets');
-  if (!nav) {
-    nav = document.createElement('nav');
-    nav.className = 'sheets';
-    document.querySelector('header > a').after(nav);
-  }
-  const here = location.pathname.replace(/\/$/, '');
-  SHEETS.concat(EXTRA).forEach(function (name) {
-    const a = document.createElement('a');
-    a.href = '/' + name;
-    a.textContent = name;
-    if (here === '/' + name) a.classList.add('current');
-    if (EXTRA.includes(name)) a.classList.add('extra');
-    nav.appendChild(a);
-  });
-})();
+// The nav between pages is filled in server-side by functions/_middleware.js,
+// which also holds the list of sheets.
 
 // Copy buttons on every code block
 document.querySelectorAll('.code').forEach(function (block) {

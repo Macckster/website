@@ -3,6 +3,12 @@
 //
 // Browsers can force it with https://<host>/?tty
 
+// Every cheat sheet page; adding one here is all it takes to put it in the
+// nav, the banner above and the curl version.
+const SHEETS = ["firewalld", "systemd", "git", "ssh"];
+// Other pages that get the nav, shown after the sheets
+const EXTRA = ["tools"];
+
 const TERMINAL_UA = /^(curl|Wget|HTTPie|xh|lwp-request|python-requests|Go-http-client)/i;
 
 const page = (host) => String.raw`
@@ -44,7 +50,7 @@ const page = (host) => String.raw`
    /?tty        this page, from a browser
 
    --- cheat sheets ---------------------------------------------------
-   /firewalld   /systemd   /git   /ssh
+   ${SHEETS.map((name) => `/${name}`).join("   ")}
 
    --- links ----------------------------------------------------------
    github       https://github.com/Macckster
@@ -58,7 +64,6 @@ const page = (host) => String.raw`
 
 // Cheat sheet pages. Terminal clients get a plain-text rendering generated
 // from the HTML page itself, so the .html file stays the only source.
-const CHEATSHEETS = new Set(["/firewalld", "/systemd", "/git", "/ssh"]);
 
 const RULE_WIDTH = 66;
 
@@ -97,6 +102,17 @@ function cheatsheetToText(html) {
     return out.join("\n");
 }
 
+// Fills the page's empty <nav class="sheets"> with links to every page.
+const navLinks = (here) => SHEETS.concat(EXTRA).map((name) => {
+    const classes = [EXTRA.includes(name) && "extra", here === name && "current"].filter(Boolean);
+    const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
+    return `<a href="/${name}"${cls}>${name}</a>`;
+}).join("");
+
+const withNav = (res, here) => new HTMLRewriter()
+    .on("nav.sheets", { element: (el) => el.setInnerContent(navLinks(here), { html: true }) })
+    .transform(res);
+
 const plain = (body) => new Response(body, {
     headers: {
         "content-type": "text/plain; charset=utf-8",
@@ -109,14 +125,17 @@ export async function onRequest({ request, next }) {
     const terminal = TERMINAL_UA.test(request.headers.get("user-agent") || "");
     const wantsText = terminal || url.searchParams.has("tty");
 
+    const name = url.pathname.replace(/^\/|\/$/g, "");
+
     if (url.pathname === "/" && wantsText) {
         return plain(page(url.host));
     }
 
-    if (CHEATSHEETS.has(url.pathname) && wantsText) {
+    if (SHEETS.includes(name) || EXTRA.includes(name)) {
         const res = await next();
         if (!res.ok) return res;
-        return plain(cheatsheetToText(await res.text()));
+        if (wantsText && SHEETS.includes(name)) return plain(cheatsheetToText(await res.text()));
+        return withNav(res, name);
     }
 
     return next();
